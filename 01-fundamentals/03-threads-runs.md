@@ -102,4 +102,4 @@ The provided exercise demonstrates advanced conversation management using Azure 
 
 ## ➡️ Next Step
 
-Once you've mastered threads and runs, proceed to [Tools](02-tools) to learn about powering Azure AI Foundry agents with tools.
+Once you've mastered threads and runs, proceed to [Tools](../02-tools/README.md) to learn about powering Azure AI Foundry agents with tools.
