@@ -1,0 +1,21 @@
+SERVICE AGREEMENT
+
+Date: January 1, 2025
+Parties: TechCorp Inc. and DataSolutions LLC
+
+TERMS
+- Service Period: 12 months
+- Monthly Fee: $50,000
+- SLA: 99.9% uptime
+- Data Processing: GDPR compliant
+- Termination: 30-day notice required
+
+SERVICES
+1. Cloud infrastructure management
+2. Data backup and recovery
+3. Security monitoring
+4. Technical support (24/7)
+
+CONTACTS
+- TechCorp: contracts@techcorp.com
+- DataSolutions: legal@datasolutions.com

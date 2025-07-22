@@ -1,0 +1,71 @@
+# Core Azure AI Foundry dependencies
+azure-ai-projects>=1.0.0b12
+azure-ai-agents>=1.1.0b2
+azure-identity>=1.17.1
+azure-core>=1.30.2
+
+# Azure AI Search for vector storage
+azure-search-documents>=11.6.0b5
+
+# OpenAI SDK
+openai>=1.40.3
+
+# Semantic Kernel
+semantic-kernel>=1.10.0
+
+# Web frameworks (used in exercises)
+fastapi>=0.112.1
+uvicorn>=0.30.6
+aiohttp>=3.10.3
+httpx>=0.27.0
+flask>=3.0.0
+flask-cors>=4.0.0 
+
+# Data processing
+pandas>=2.2.2
+numpy>=2.0.1
+pydantic>=2.8.2
+
+# Development essentials
+python-dotenv>=1.0.1
+rich>=13.7.1
+
+# Structured logging
+structlog>=24.4.0
+
+# Testing (if you want to keep test capabilities)
+pytest>=8.3.2
+pytest-asyncio>=0.23.8
+
+# Required for async operations in SK
+nest-asyncio>=1.6.0
+
+# For system monitoring in production exercises
+psutil>=5.9.0
+
+# JSON and YAML processing
+PyYAML>=6.0.1
+jsonschema>=4.20.0
+jsonrpclib-pelix>=0.4.3.3
+websockets>=12.0  # For WebSocket-based MCP transport
+
+# Additional dependencies for Azure AI Search integration
+azure-search-documents>=11.6.0b5
+azure-core>=1.30.2
+
+# Required for certain async operations in SK
+nest-asyncio>=1.6.0
+
+# Optional: Docker SDK for containerized MCP servers
+docker>=7.1.0
+
+# Optional: For production deployments
+gunicorn>=22.0.0
+
+# MCP (Model Context Protocol) dependencies
+# Official Python SDK for MCP
+mcp>=0.1.0
+# FastMCP for easier MCP server creation
+fastmcp>=0.1.0
+
+aiosqlite>=0.20.0  # Async SQLite support

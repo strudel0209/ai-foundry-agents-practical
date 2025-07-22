@@ -1,0 +1,37 @@
+API INTEGRATION MANUAL
+
+Version 2.1 - Updated January 2025
+
+OVERVIEW
+Comprehensive guidance for integrating with our REST API platform.
+
+AUTHENTICATION
+Base URL: https://api.company.com/v2
+Authentication: Bearer token required
+Rate Limits: 1000 requests/hour
+
+ENDPOINTS
+
+1. GET /users
+   - Retrieve user information
+   - Response: JSON user object
+
+2. POST /documents
+   - Upload document for processing
+   - Max size: 10MB
+
+3. GET /analytics
+   - Retrieve usage analytics
+   - Response: JSON analytics data
+
+ERROR HANDLING
+- 400: Bad Request
+- 401: Unauthorized
+- 429: Rate Limited
+- 500: Server Error
+
+BEST PRACTICES
+- Implement exponential backoff
+- Cache responses when possible
+- Use webhook notifications
+- Monitor API usage
