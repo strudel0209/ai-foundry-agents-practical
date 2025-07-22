@@ -137,9 +137,7 @@ ai-agents-system/
 ├── 04-mcp/                   # Model Context Protocol integration
 │   ├── exercises/            # Hands-on MCP exercises
 │   └── scripts/              # MCP server implementation & deployment
-├── core/                     # Shared utilities and configuration
-├── examples/                 # Complete working examples
-├── tests/                    # Comprehensive test suite
+├── data/                     # docs and images
 └── .devcontainer/           # VS Code dev container setup
 ```
 
