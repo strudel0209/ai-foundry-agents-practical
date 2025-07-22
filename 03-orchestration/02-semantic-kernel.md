@@ -1,6 +1,6 @@
 # 1. Semantic Kernel Integration - Multi-Agent Orchestration
 
-In this lesson, you'll master the integration of Azure AI Foundry agents with Microsoft Semantic Kernel to create sophisticated multi-agent orchestration patterns. This powerful combination enables intelligent agent collaboration and complex workflow automation.
+In this lesson, you'll master the integration of Azure AI Foundry agents with Microsoft Semantic Kernel to create multi-agent orchestration patterns.
 
 ## 🎯 Objectives
 
@@ -10,68 +10,68 @@ In this lesson, you'll master the integration of Azure AI Foundry agents with Mi
 - Build collaborative agent workflows
 - Create enterprise-grade agent coordination systems
 
-## ⏱️ Estimated Time: 90 minutes
-
 ## 🧠 Key Concepts
 
 ### What is Semantic Kernel?
 
-Semantic Kernel is Microsoft's open-source SDK that enables:
+Semantic Kernel (SK) is Microsoft's open-source SDK for orchestrating AI agents, models, and tools. It enables:
+- **Multi-agent orchestration**: Coordinate multiple agents for complex workflows
+- **Plugin architecture**: Extend agent capabilities with custom functions and tools
+- **Memory management**: Maintain context and history across agent interactions
+- **Flexible planning**: Automate task decomposition and execution
 
-- **AI Orchestration**: Coordinate multiple AI models and services
-- **Plugin Architecture**: Extend capabilities with custom functions
-- **Memory Management**: Maintain context across conversations
-- **Planning**: Automatic task decomposition and execution
-- **Chain of Thought**: Complex reasoning workflows
+### How Does SK Integrate with Azure AI Foundry Agents?
 
-### Multi-Agent Orchestration Architecture
+- **Direct Agent Wrapping**: SK can wrap Azure AI Foundry agents as SK agents, allowing seamless orchestration and invocation.
+- **Unified Interface**: SK agents expose a standard interface for sending messages, receiving responses, and managing context.
+- **Orchestration Patterns**: SK supports sequential, round-robin, hybrid, and hierarchical agent workflows.
 
-```text
-User Request → Task Analysis → Agent Selection → Workflow Execution
-                                    ↓
-Phase 1: Research → Phase 2: Analysis → Phase 3: Synthesis → Final Result
-```
+## 🚀 What Does the Demo Code Do?
 
-### Key Components
+The code in `exercises/exercise_2_semantic_kernel.py` demonstrates modern orchestration patterns using SK and Azure AI Foundry agents:
 
-1. **Kernel**: Core orchestration engine
-2. **Azure AI Foundry Agents**: Specialized agent instances from Azure AI Foundry
-3. **SK Agent Wrappers**: Direct integration layer between SK and Foundry agents
-4. **Workflow Coordinator**: Manages agent interactions
-5. **Result Synthesizer**: Combines agent outputs
+1. **Agent Wrapping**: Wraps Azure AI Foundry agents as SK agents, preserving their capabilities and instructions.
+2. **Sequential Orchestration**: Passes a task through a sequence of specialized agents (research, analysis, writing), with each agent building on the previous output.
+3. **Round-Robin Discussion**: Simulates a multi-agent panel, where agents take turns contributing to a shared discussion.
+4. **Hybrid Orchestration**: Combines sequential and parallel agent workflows for more complex tasks.
+5. **Kernel Setup**: Initializes the SK kernel and connects it to Azure AI Foundry via the Python SDK.
+6. **Agent Creation and Reuse**: Efficiently creates or reuses agents, avoiding duplication and optimizing resource usage.
+7. **Result Synthesis**: Aggregates and summarizes outputs from multiple agents for final reporting.
 
-## 🚀 Implementation Approaches
+## 💡 Semantic Kernel Usage Patterns in the Demo
 
-### Creating Azure AI Foundry Agents with Semantic Kernel
+- **Direct SK Agent Wrappers**: The demo uses a direct wrapper class to expose Azure AI Foundry agents as SK agents, enabling invocation and orchestration without plugin indirection.
+- **Async Invocation**: All agent interactions are performed asynchronously, supporting scalable and responsive workflows.
+- **Multi-Agent Coordination**: The orchestrator manages multiple agents, routing tasks and synthesizing results according to the chosen pattern.
+- **Error Handling**: The code handles run statuses, errors, and edge cases gracefully, reporting issues and ensuring robust execution.
+- **Result Export**: Outputs from orchestration runs are saved for further analysis or reporting.
 
-Semantic Kernel provides a powerful way to integrate with Azure AI Foundry agents through a direct wrapper approach. This allows you to:
+## 🔍 Best Practices
 
-1. **Use the SK Agent interface**: Implement the standard SK Agent interface for consistent patterns
-2. **Preserve Azure AI Foundry capabilities**: Maintain all the capabilities of Foundry agents
-3. **Leverage SK orchestration**: Take advantage of SK's orchestration capabilities
+- **Use Direct Wrappers**: Wrap Azure AI Foundry agents as SK agents for seamless orchestration.
+- **Design Clear Agent Roles**: Assign specific instructions and expertise to each agent for modular workflows.
+- **Monitor Run Status**: Always check agent run status and handle errors or required actions.
+- **Optimize Resource Usage**: Reuse agents and threads where possible to avoid unnecessary resource consumption.
+- **Aggregate Results**: Synthesize outputs from multiple agents for comprehensive reporting.
 
-The implementation involves:
+## 🔧 Troubleshooting
 
-1. Creating an `AIProjectClient` to connect to your Azure AI Foundry project
-2. Creating or reusing Azure AI Foundry agents through the client
-3. Wrapping these agents in a custom SK Agent implementation
-4. Using SK's agent interfaces for invocation and response handling
+- **API Usage**: Use the correct Azure AI Foundry SDK methods for threads, messages, and runs.
+- **ItemPaged Handling**: Iterate over paged results instead of accessing `.data` directly.
+- **Content Structure**: Handle both list and direct content formats in agent responses.
+- **Run Statuses**: Monitor for all possible run states, including `requires_action`, `failed`, and `expired`.
 
-When implementing the wrapper, it's crucial to handle the Azure AI SDK's patterns correctly:
-- Using proper sub-clients (`threads`, `messages`, `runs`)
-- Handling `ItemPaged` objects through iteration
-- Processing different message content structures
-- Managing run statuses properly
+## 📖 Additional Resources
 
-### Orchestration Patterns
+- [Semantic Kernel Documentation](https://learn.microsoft.com/en-us/semantic-kernel/)
+- [Azure AI Foundry Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/)
+- [SK Agent Orchestration Patterns](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/agent-orchestration/)
+- [2025 Azure AI Foundry Docs](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/)
 
-#### 1. Sequential Orchestration
+---
 
-Sequential orchestration routes a task through a series of specialized agents, with each agent building on the previous agent's work.
-
-**Use Case**: Complex tasks requiring progressive refinement or staged processing.
-
-**Implementation Approach**:
+**Ready to try?**  
+Run `python 03-orchestration/exercises/exercise_2_semantic_kernel.py` to see multi-agent orchestration in action with Semantic Kernel and Azure AI Foundry agents.
 - Define a sequence of specialized agents
 - Create a workflow that passes output from one agent to the next
 - Each agent adds its expertise to the evolving solution
@@ -196,126 +196,6 @@ async def execute_hierarchical_workflow(self, request):
 3. Manager Agent monitors progress and coordinates
 4. Manager Agent synthesizes the final deliverable
 
-### Advanced Integration Techniques
-
-#### Semantic Kernel Memory Integration
-
-For long-running agent workflows, integrating SK's memory capabilities enables context retention across sessions:
-
-```python
-# Pattern for memory integration
-async def setup_memory_for_agents(self):
-    # Setup memory store
-    memory_store = AzureCognitiveSearchMemoryStore(
-        search_endpoint=os.getenv('AZURE_AI_SEARCH_ENDPOINT'),
-        admin_key=os.getenv('AZURE_AI_SEARCH_API_KEY')
-    )
-    
-    # Create semantic memory instance
-    semantic_memory = SemanticTextMemory(
-        storage=memory_store,
-        embeddings_generator=self.kernel.get_service("text-embedding-ada-002")
-    )
-    
-    # Import memory plugin
-    self.kernel.import_plugin(
-        TextMemoryPlugin(semantic_memory),
-        "memory"
-    )
-```
-
-#### Multi-Agent Evaluation Framework
-
-For production-grade agent systems, implementing an evaluation framework helps monitor agent performance:
-
-```python
-# Pattern for agent evaluation
-async def evaluate_agent_performance(self, agent, test_cases):
-    results = []
-    for test in test_cases:
-        start_time = time.time()
-        response = await agent.invoke(test.input)
-        execution_time = time.time() - start_time
-        
-        # Evaluate response quality
-        accuracy = await self.evaluate_response_accuracy(response, test.expected_output)
-        
-        results.append({
-            "test_id": test.id,
-            "execution_time": execution_time,
-            "accuracy": accuracy,
-            "response": response
-        })
-    
-    return self.generate_performance_report(results)
-```
-
-#### Cross-Model Agent Collaboration
-
-The latest SK features support collaboration between agents powered by different model providers:
-
-```python
-# Pattern for cross-model agent collaboration
-async def create_cross_model_team(self):
-    # Azure OpenAI-powered agent
-    azure_agent = AzureAIAgent(
-        client=self.ai_client,
-        definition=self.foundry_agent,
-        kernel=self.kernel
-    )
-    
-    # Anthropic-powered agent via Semantic Kernel
-    anthropic_agent = ChatCompletionAgent(
-        service=AnthropicChatCompletion(),
-        name="AnthropicSpecialist",
-        instructions="You are a specialist in creative thinking"
-    )
-    
-    # Local model-powered agent
-    local_agent = ChatCompletionAgent(
-        service=OllamaService("llama3"),
-        name="EfficientReasoner",
-        instructions="You perform efficient reasoning tasks"
-    )
-    
-    return {
-        "azure_agent": azure_agent,
-        "anthropic_agent": anthropic_agent,
-        "local_agent": local_agent
-    }
-```
-
-## 🎯 Exercises
-
-### Exercise A: Custom Agent Specialization
-
-Create specialized agents for your domain:
-
-1. **Define 5 specialized agents** for your business domain
-2. **Implement domain-specific instructions** and capabilities
-3. **Create custom orchestration workflows** for complex tasks
-4. **Test agent collaboration** across different scenarios
-5. **Measure performance** and optimize workflows
-
-### Exercise B: Advanced Workflow Patterns
-
-Build sophisticated workflow orchestration:
-
-1. **Implement conditional workflows** based on intermediate results
-2. **Create parallel execution** for independent agent tasks
-3. **Add workflow validation** and error recovery
-4. **Build workflow templates** for common business processes
-5. **Implement workflow monitoring** and metrics collection
-
-### Exercise C: Enterprise Integration
-
-Integrate with enterprise systems:
-
-1. **Connect to external APIs** through specialized agents
-2. **Implement authentication** and security controls
-3. **Add audit logging** for all agent interactions
-4. **Create workflow dashboards** for monitoring
-5. **Build deployment pipelines** for production use
 
 ## 🔍 Best Practices
 
@@ -381,7 +261,3 @@ After completing this lesson, you should understand:
 ## ➡️ Next Step
 
 Once you've mastered Semantic Kernel integration, proceed to [Advanced Orchestration Patterns](./03-advanced-orchestration.md) to learn enterprise-grade multi-agent systems.
-
----
-
-**💡 Pro Tip**: When designing multi-agent systems, focus on clear role definitions and well-defined interfaces between agents. This promotes modularity and makes it easier to evolve your system over time.

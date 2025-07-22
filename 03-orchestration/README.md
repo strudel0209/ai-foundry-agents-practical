@@ -1,6 +1,6 @@
 # Module 3: Orchestration - Advanced Multi-Agent Systems
 
-This module explores sophisticated orchestration patterns that enable multiple Azure AI Foundry agents to collaborate intelligently. Learn to build enterprise-grade systems that coordinate agents with different specializations to solve complex business problems using Semantic Kernel.
+This module explores orchestration patterns that enable multiple Azure AI Foundry agents to collaborate intelligently. Learn to build enterprise-grade systems that coordinate agents with different specializations to solve complex business problems using Semantic Kernel.
 
 ## 🎯 Module Overview
 
@@ -8,20 +8,6 @@ Multi-agent orchestration transforms individual agents into collaborative system
 
 1. **[Semantic Kernel Integration](02-semantic-kernel.md)** - Foundation for intelligent agent coordination and orchestration
 2. **[Advanced Orchestration Patterns](03-advanced-orchestration.md)** - Enterprise-grade multi-agent workflows with memory/context
-
-## 📚 Learning Path
-
-### Prerequisites
-- Completion of [Module 2: Tools](../02-tools/README.md)
-- Understanding of Azure AI Foundry agent capabilities
-- Basic knowledge of workflow design patterns
-- Familiarity with async programming in Python
-
-### Time Investment
-- **Total Time**: 4-5 hours
-- **Semantic Kernel Integration**: 90 minutes
-- **Advanced Orchestration**: 120 minutes
-- **Enterprise Implementation**: 90 minutes
 
 ## 🧠 Orchestration Concepts
 
@@ -119,15 +105,6 @@ See [03-advanced-orchestration.md](03-advanced-orchestration.md) for details.
 - **Integrated Business Report**: Synthesize outputs from multiple agents.
 - **Memory-Aware Follow-Up**: Summarize key findings using stored memory/context.
 
-## 🎯 Module Exercises
-
-- **Exercise 2: Creating Your First Azure AI Agent**  
-  Learn agent creation, configuration, and basic conversation handling.  
-  See `exercise_2_basic_agent.py` for step-by-step agent setup and testing.
-
-- **Exercise 3: Advanced Multi-Agent Orchestration**  
-  Build a robust, memory-aware multi-agent orchestration system.  
-  See `exercise_3_advanced_orchestration.py` for advanced orchestration, memory management, and collaborative workflows.
 
 ## 🔍 Best Practices
 
@@ -169,36 +146,9 @@ See [03-advanced-orchestration.md](03-advanced-orchestration.md) for details.
 - Implement parallel execution where possible
 - Add performance monitoring and alerting
 
-## 📈 Advanced Topics
-
-### Orchestration Patterns
-
-**Event-Driven Orchestration**: React to events and triggers rather than direct requests  
-**Workflow Templates**: Create reusable workflow patterns for common business processes  
-**Dynamic Agent Selection**: Use ML to optimize agent selection based on historical performance  
-**Cross-Organization Orchestration**: Coordinate agents across different organizational boundaries
-
-### Performance Optimization
-
-**Load Balancing Strategies**: Distribute work efficiently across agent instances  
-**Caching Architectures**: Implement multi-level caching for improved performance  
-**Resource Optimization**: Optimize compute and memory usage across the orchestration system  
-**Network Optimization**: Minimize network latency in distributed agent systems
-
-### Enterprise Integration
-
-**Legacy System Integration**: Connect orchestration systems with existing enterprise systems  
-**API Gateway Patterns**: Implement API gateways for external orchestration access  
-**Service Mesh Integration**: Use service mesh for advanced networking and security  
-**Observability Platforms**: Integrate with enterprise observability and monitoring systems
-
 ## ➡️ Next Steps
 
 After mastering orchestration patterns, you'll be ready to explore:
 
 - **[Module 4: MCP Integration](../04-mcp/README.md)** - Model Context Protocol for enhanced tool connectivity
 - **[Module 5: Production Deployment](../05-production/README.md)** - Enterprise deployment and monitoring strategies
-
----
-
-**💡 Pro Tip**: Start development with in-memory vector store to validate your orchestration logic, then switch to Azure AI Search for production. The code automatically handles both scenarios, making the transition seamless.
