@@ -28,7 +28,7 @@ If you prefer to work locally without containers:
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/strudel0209/ai-foundry-agents-practical.git
 cd ai-agents-system
 
 # Set up Python environment
