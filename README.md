@@ -25,7 +25,7 @@ The easiest way to get started is using the pre-configured dev container in VS C
 
 ```bash
 # Clone the repository
-git clone <repository-url>
+git clone https://github.com/strudel0209/ai-foundry-agents-practical.git
 cd ai-agents-system
 
 # Open in VS Code
@@ -219,9 +219,6 @@ Automated deployment to Azure Container Apps:
 ```bash
 # Run module-specific tests
 python 01-fundamentals/exercises/exercise_1_setup.py
-
-# Run comprehensive system tests
-python tests/run_comprehensive_tests.py
 
 # Test MCP server locally
 python 04-mcp/exercises/scripts/setup_sqlite_mcp_server.py
