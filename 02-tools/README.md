@@ -25,8 +25,7 @@ Each tool lesson follows this structure:
 1. **Concepts & Architecture** - Understanding the tool's capabilities
 2. **Implementation** - Step-by-step code examples
 3. **Best Practices** - Enterprise-grade patterns
-4. **Exercises** - Hands-on practice scenarios
-5. **Troubleshooting** - Common issues and solutions
+4. **Troubleshooting** - Common issues and solutions
 
 
 ## 📖 Detailed Lessons
@@ -87,9 +86,9 @@ Extend your agents with custom business logic, API integrations, and real-time d
 - External API integration patterns
 - Multi-function orchestration
 
-## 🔄 Tool Combination Patterns
+## 🔄 Tool Combination Patterns - extend this codebase whit mixing tools
 
-### Pattern 1: Research & Analysis Workflow
+### Pattern 1 example idea: Research & Analysis Workflow
 
 ```python
 # 1. File Search: Find relevant documents
@@ -97,7 +96,7 @@ Extend your agents with custom business logic, API integrations, and real-time d
 # 3. Function Calling: Validate and store results
 ```
 
-### Pattern 2: Data Processing Pipeline
+### Pattern 2 example idea: Data Processing Pipeline
 
 ```python
 # 1. Function Calling: Fetch data from APIs
@@ -105,39 +104,13 @@ Extend your agents with custom business logic, API integrations, and real-time d
 # 3. File Search: Compare with historical documents
 ```
 
-### Pattern 3: Business Decision Support
+### Pattern 3 example idea: Business Decision Support
 
 ```python
 # 1. File Search: Retrieve policy documents
 # 2. Function Calling: Apply business rules
 # 3. Code Interpreter: Generate compliance reports
 ```
-
-## 🎯 Module Exercises
-
-### Exercise 1: Multi-Tool Integration
-
-Build an agent that uses all three tools to solve a complex business scenario:
-
-- Research market data using File Search
-- Analyze trends with Code Interpreter
-- Execute trading decisions with Function Calling
-
-### Exercise 2: Enterprise Knowledge Assistant
-
-Create a comprehensive knowledge management system:
-
-- Index company documents with File Search
-- Generate insights and summaries with Code Interpreter
-- Integrate with CRM systems via Function Calling
-
-### Exercise 3: Data Science Workflow
-
-Implement an end-to-end data science pipeline:
-
-- Load datasets through Function Calling
-- Perform analysis with Code Interpreter
-- Compare results with research papers via File Search
 
 ## 🔍 Best Practices
 
@@ -205,7 +178,6 @@ After mastering the tools in this module, you'll be ready to explore:
 
 - **[Module 3: Orchestration](../03-orchestration/README.md)** - Advanced agent coordination patterns
 - **[Module 4: MCP Integration](../04-mcp/README.md)** - Model Context Protocol for enhanced tool connectivity
-- **[Module 5: Production Deployment](../05-production/README.md)** - Enterprise deployment and monitoring
 
 ## 🏆 Module Completion
 
