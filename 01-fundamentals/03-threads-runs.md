@@ -1,6 +1,6 @@
 # 3. Understanding Threads and Runs
 
-In this lesson, you'll master the conversation flow in Azure AI Foundry agents through threads and runs - the core execution model that powers agent interactions.
+In this lesson, you'll master the conversation flow in Azure AI Foundry agents through threads and runs—the core execution model that powers agent interactions.
 
 ## 🎯 Objectives
 
@@ -11,86 +11,95 @@ In this lesson, you'll master the conversation flow in Azure AI Foundry agents t
 - Build conversation history management
 - Handle tool execution during runs
 
-## ⏱️ Estimated Time: 45 minutes
+---
 
 ## 🧠 Key Concepts
 
-### The Agent Execution Model
+### What Are Threads and Runs?
 
-Azure AI Foundry agents use a sophisticated execution model:
+**Threads** in Azure AI Foundry agents represent persistent conversation sessions between a user and an agent. Each thread maintains the full context of the conversation, storing all messages exchanged. This enables multi-turn, context-aware interactions, allowing the agent to reference previous messages and maintain continuity.
 
-```
-User Message → Thread → Run → Agent Processing → Tool Calls → Response
-```
+**Runs** are activations of an agent to process the messages in a thread. When a run is started, the agent uses its configuration and the thread's messages to perform tasks, call tools, and generate responses. Runs are tracked with detailed status updates and execution steps.
 
-### Core Components
+**Why Is This Important?**
 
-1. **Thread**: A conversation session that maintains context
-2. **Message**: Individual communications within a thread
-3. **Run**: Agent activation to process thread messages
-4. **Run Step**: Detailed execution steps during a run
-5. **Tool Outputs**: Results from tool executions
+- **Context Retention:** Threads ensure that the agent can maintain and reference conversation history, enabling more natural and intelligent responses.
+- **Stateful Execution:** Runs allow you to monitor the agent's progress, handle tool calls, and manage asynchronous workflows.
+- **Debugging & Monitoring:** By tracking run states and steps, you can diagnose issues, optimize performance, and ensure reliable agent behavior.
 
-### Run States
+---
 
-```
-queued → in_progress → requires_action → completed
-                    ↓
-                   failed/cancelled/expired
-```
+## 💡 How the Code Works
 
-## 🔍 Best Practices
+The provided exercise demonstrates advanced conversation management using Azure AI Foundry agents. Here's what it does:
 
-### Thread Management
+### 1. ConversationManager Class
 
-1. **Reuse Threads**: Keep conversations in the same thread for context
-2. **Clean Up**: Delete threads when conversations are complete
-3. **Limit Length**: Monitor thread length to avoid token limits
-4. **Backup Context**: Save important conversation state externally
+- **Purpose:** Manages multiple conversation threads, tracks history, and coordinates agent interactions.
+- **Features:** 
+  - Creates new threads for different scenarios.
+  - Adds messages to threads, recording user and assistant exchanges.
+  - Maintains a structured history for each conversation.
 
-### Run Monitoring
+### 2. Creating and Managing Threads
 
-1. **Implement Timeouts**: Don't wait indefinitely for runs
-2. **Handle All States**: Prepare for failed, cancelled, and expired runs
-3. **Log Details**: Capture run steps for debugging
-4. **Retry Logic**: Implement retry for transient failures
+- **Thread Creation:** Each scenario or user session starts with a new thread, ensuring isolated context.
+- **Message Addition:** User messages are appended to the thread, and the agent's responses are tracked.
 
-### Tool Execution
+### 3. Executing Runs and Monitoring Status
 
-1. **Validate Inputs**: Check tool call arguments before execution
-2. **Error Recovery**: Handle tool execution failures gracefully
-3. **Security**: Sanitize and validate all tool outputs
-4. **Performance**: Monitor tool execution times
+- **Run Execution:** For each user message, a run is started to process the thread and generate a response.
+- **Status Polling:** The code continuously monitors the run status (`queued`, `in_progress`, `requires_action`, `completed`, etc.), providing live feedback.
+- **Run Steps:** Detailed execution steps are retrieved, showing tool calls, message creation, and other agent actions.
 
-## 🔧 Troubleshooting
+### 4. Handling Tool Execution
 
-### Common Issues
+- **Tool Calls:** If the agent needs to use a tool (e.g., calculator, time lookup), the code simulates tool execution and submits outputs back to the run.
+- **Approval Workflow:** The code handles `requires_action` states, ensuring tool outputs are provided as needed.
 
-**Run stuck in "queued" status:**
-- Check model deployment availability
-- Verify quota limits
-- Try with different model
+### 5. Conversation History and Export
 
-**"requires_action" handling fails:**
-- Ensure tool output format is correct
-- Check tool_call_id matches exactly
-- Validate tool output content
+- **History Tracking:** All messages and responses are stored, allowing for review and export.
+- **Export:** Conversations can be saved to JSON files for analysis or auditing.
 
-**Messages not appearing:**
-- Wait for run completion before fetching messages
-- Check message ordering (latest first)
-- Verify thread_id is correct
+### 6. Scenario Demonstrations
 
-## 📖 Key Takeaways
+- **Multi-Turn Q&A:** Shows how the agent maintains context across multiple exchanges.
+- **Tool Usage:** Demonstrates agent-initiated tool calls and result handling.
+- **Context Retention:** Validates the agent's ability to remember and reference earlier information.
 
-After completing this lesson, you should understand:
+---
 
-1. **Thread Lifecycle**: How to create, use, and manage conversation threads
-2. **Run States**: Different run states and how to handle each
-3. **Tool Integration**: How tools are executed within runs
-4. **Context Management**: Maintaining conversation history and context
-5. **Error Handling**: Robust patterns for handling failures
+## 🔍 Azure AI Foundry Agent Features for Threads and Runs
+
+- **Persistent Threads:** Maintain full conversation history for context-aware responses.
+- **Flexible Message Handling:** Support for text, images, and files in messages.
+- **Run Monitoring:** Track run status, execution steps, and tool calls for transparency and debugging.
+- **Tool Integration:** Agents can invoke tools during runs, with support for approval workflows and output submission.
+- **Conversation Isolation:** Each thread is independent, enabling multiple concurrent sessions.
+- **Export & Audit:** Conversation data can be exported for compliance, analysis, or training.
+
+---
+
+## 📊 Why Monitoring Threads and Runs Matters
+
+- **Reliability:** Ensures agents complete tasks and respond appropriately.
+- **Debugging:** Identifies where runs fail or require intervention.
+- **Performance:** Tracks execution times and tool usage for optimization.
+- **Security & Compliance:** Maintains audit trails of all interactions.
+- **User Experience:** Enables seamless, context-rich conversations.
+
+---
+
+## 📖 Additional Resources
+
+- [Threads, Runs, and Messages in Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/concepts/threads-runs-messages)
+- [Agent Playground and Monitoring](https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/develop/vs-code-agents#explore-threads)
+- [Quickstart: Create and Monitor Agents](https://learn.microsoft.com/en-us/azure/ai-foundry/agents/quickstart#configure-and-run-an-agent)
+- [2025 Azure AI Foundry SDK Reference](https://learn.microsoft.com/en-us/python/api/overview/azure/ai-projects-readme)
+
+---
 
 ## ➡️ Next Step
 
-Once you've mastered threads and runs, proceed to [Tools](02-tools) to learn about powering Azure AI Foundry agents with tools
+Once you've mastered threads and runs, proceed to [Tools](02-tools) to learn about powering Azure AI Foundry agents with tools.
