@@ -20,24 +20,7 @@ A hands-on learning repo for building from basic AI agents to Agents geared with
 
 ### Option 1: Using Dev Container (Recommended)
 
-The easiest way to get started is using the pre-configured dev container in VS Code:
-
-```bash
-# Clone the repository
-git clone https://github.com/strudel0209/ai-foundry-agents-practical.git
-cd ai-agents-system
-
-# Open in VS Code
-code .
-```
-
-1. **Install Dev Containers extension**: 
-   - In VS Code, install the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
-   
-2. **Reopen in Container**:
-   - Press `F1` or `Ctrl+Shift+P` to open command palette
-   - Select **"Dev Containers: Reopen in Container"**
-   - VS Code will build and start the container automatically
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/strudel0209/ai-foundry-agents-practical) [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/strudel0209/ai-foundry-agents-practical)
 
 ### Option 2: Local Python Environment
 
@@ -103,9 +86,8 @@ Build sophisticated multi-agent systems.
 
 **What you'll learn:**
 - Semantic Kernel integration for agent coordination
-- Memory management with vector stores
+- Memory management with vector stores (in-memory and Azure AI Search vector store)
 - Intelligent routing and workflow automation
-- Enterprise orchestration patterns
 
 **Key exercises:**
 - `exercise_2_semantic_kernel.py` - SK integration basics
