@@ -10,8 +10,6 @@ In this lesson, you'll build enterprise-grade multi-agent orchestration systems 
 - Integrate multiple tool types across agent specializations
 - Develop production-ready orchestration architectures
 
-## ⏱️ Estimated Time: 120 minutes
-
 ## 🧠 Key Concepts
 
 ### Advanced Orchestration Architecture

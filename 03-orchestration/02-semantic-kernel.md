@@ -126,7 +126,7 @@ async def execute_concurrent_workflow(self, request, agents):
 3. Market Specialist analyzes market positioning
 4. Results are synthesized into a comprehensive review
 
-#### 4. Human-in-the-Loop Orchestration
+#### 4. Human-in-the-Loop Orchestration (WIP)
 
 Human-in-the-loop orchestration incorporates human feedback and guidance at critical decision points.
 
@@ -165,7 +165,7 @@ async def execute_with_human_oversight(self, request, agent, review_points=None)
 3. Agent refines based on feedback
 4. Final human approval before publication
 
-#### 5. Hierarchical Orchestration
+#### 5. Hierarchical Orchestration (WIP)
 
 Hierarchical orchestration uses a coordinator agent to manage specialized worker agents.
 
