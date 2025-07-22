@@ -86,7 +86,7 @@ Master the basics of Azure AI Foundry agents.
 - `exercise_2_basic_agent.py` - First agent creation
 - `exercise_3_conversation.py` - Multi-turn conversations
 
-### [Module 2: Tools Mastery](02-tools/README.md) *(4-5 hours)*
+### [Module 2: Tools Mastery](02-tools/README.md)
 Unlock the full potential of agent tools.
 
 **What you'll learn:**
@@ -99,7 +99,7 @@ Unlock the full potential of agent tools.
 - `exercise_2_code_interpreter.py` - Data visualization and analysis
 - `exercise_3_function_calling.py` - Business logic integration
 
-### [Module 3: Advanced Orchestration](03-orchestration/README.md) *(4-5 hours)*
+### [Module 3: Advanced Orchestration](03-orchestration/README.md)
 Build sophisticated multi-agent systems.
 
 **What you'll learn:**
@@ -112,7 +112,7 @@ Build sophisticated multi-agent systems.
 - `exercise_2_semantic_kernel.py` - SK integration basics
 - `exercise_3_advanced_orchestration.py` - Multi-agent workflows with memory
 
-### [Module 4: MCP Integration](04-mcp/README.md) *(4-5 hours)*
+### [Module 4: MCP Integration](04-mcp/README.md)
 Connect agents to external systems using Model Context Protocol.
 
 **What you'll learn:**
@@ -249,14 +249,3 @@ curl https://your-mcp-server.azurecontainerapps.io/health
 - [Azure AI Community](https://techcommunity.microsoft.com/t5/azure-ai/ct-p/AzureAI)
 - [MCP Discord](https://discord.gg/mcp)
 - [Stack Overflow - Azure AI Foundry](https://stackoverflow.com/questions/tagged/azure-ai-foundry)
-
-
-## 🤝 Contributing
-
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
