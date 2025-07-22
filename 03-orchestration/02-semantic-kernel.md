@@ -99,7 +99,7 @@ Round-robin discussion enables multiple agents to contribute to a conversation i
 2. Each specialist builds on previous contributions
 3. The discussion evolves as multiple viewpoints are considered
 
-#### 3. Concurrent Collaboration
+#### 3. Concurrent Collaboration (WIP)
 
 Concurrent collaboration allows multiple agents to work simultaneously on different aspects of a problem.
 
@@ -226,13 +226,6 @@ async def execute_hierarchical_workflow(self, request):
 ## 🔧 Troubleshooting
 
 ### Common Issues
-
-**Azure AI SDK API errors:**
-
-- Use the correct sub-client structure (e.g., `client.agents.threads.create()`)
-- Handle `ItemPaged` objects with iteration, not `.data` attribute
-- Check message content structure and handle both list and direct formats
-- Monitor run status for all possible states including `requires_action`
 
 **Orchestration failures:**
 
