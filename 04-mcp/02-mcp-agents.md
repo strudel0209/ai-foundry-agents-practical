@@ -20,6 +20,67 @@ Azure AI Foundry Agent Service natively supports MCP tools, allowing you to exte
 
 ---
 
+## Visualizing and Testing MCP Servers with MCP Inspector
+
+Before connecting your MCP server to Azure AI Foundry agents, it's best practice to visually inspect and test your MCP server using the **MCP Inspector**. [MCP Inspector GitHub](https://github.com/modelcontextprotocol/inspector) is a visual and CLI tool for debugging, validating, and interacting with MCP servers in real time.
+
+### Why Use MCP Inspector?
+
+- **Visualize available tools and resources** exposed by your MCP server
+- **Interactively test tool calls and responses** before agent integration
+- **Debug and validate MCP protocol compliance**
+- **Export server launch configurations** for use in IDEs and agent frameworks
+
+### Step-by-Step Guide: Visualizing Your MCP Server with MCP Inspector
+
+1. **Install MCP Inspector (if not already available)**
+   ```bash
+   # Run MCP Inspector directly with npx (no install needed)
+   npx @modelcontextprotocol/inspector
+   ```
+   Or, for local development:
+   ```bash
+   npm install -g @modelcontextprotocol/inspector
+   ```
+
+2. **Start your MCP server**
+   ```bash
+   python ./scripts/setup_sqlite_mcp_server.py
+   ```
+   Or use any MCP-compliant server endpoint.
+
+3. **Launch MCP Inspector and connect to your MCP server**
+   ```bash
+   # Start MCP Inspector and provide your MCP server URL
+   npx @modelcontextprotocol/inspector --server http://localhost:3000
+   ```
+   - The Inspector UI will open in your browser.
+   - You can also use the CLI for advanced testing.
+
+4. **Explore Tools and Resources**
+   - The Inspector will list all available tools (`tools/list`) and resources (`resources/list`) exposed by your MCP server.
+   - Click on any tool to view its schema, parameters, and try out sample invocations.
+
+5. **Test Tool Calls**
+   - Use the Inspector's UI to send requests to your MCP server.
+   - View real-time responses, debug errors, and validate output formats.
+
+6. **Export Configuration for IDEs**
+   - MCP Inspector provides convenient buttons to export server launch configurations (e.g., for Visual Studio Code, Cursor, Claude Code).
+   - The configuration file is usually called `mcp.json`.
+
+7. **Advanced Features**
+   - Inspect prompt templates, tool schemas, and resource metadata.
+   - Use the Inspector to simulate agent workflows and verify protocol compliance.
+
+**References:**
+- [MCP Inspector GitHub](https://github.com/modelcontextprotocol/inspector)
+- [MCP Inspector Guide (2025)](https://www.mcpevals.io/blog/mcp-inspector-guide)
+- [Visual Studio Marketplace: MCP Inspector Extension](https://marketplace.visualstudio.com/items?itemName=DhananjaySenday.mcp--inspector)
+- [Model Context Protocol Specification](https://modelcontextprotocol.io/introduction)
+
+---
+
 ## Setting up the SQLite MCP Server
 
 The `scripts` folder contains everything you need to set up a complete SQLite MCP server for business analytics. Azure AI Foundry agents **only support HTTP streamable MCP servers**, not local stdio-based servers.

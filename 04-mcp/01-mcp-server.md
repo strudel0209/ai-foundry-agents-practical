@@ -170,44 +170,6 @@ Key implementation aspects covered in the exercise:
 - Error handling and logging
 - Asynchronous operation support
 
-## 🎯 Exercises
-
-### Exercise A: Explore MCP Ecosystem
-
-1. **Install MCP Inspector**
-   - Use the MCP Inspector tool to explore server capabilities
-   - Test against example MCP servers
-   - Understand the protocol flow
-
-2. **Try Different MCP Servers**
-   - Test the Azure MCP Server
-   - Explore community MCP servers
-   - Compare different implementations
-
-### Exercise B: Deploy to Azure
-
-1. **Container Apps Deployment**
-   - Package your MCP server as a container
-   - Deploy to Azure Container Apps
-   - Configure authentication
-
-2. **Azure Functions Deployment**
-   - Create a serverless MCP server
-   - Implement basic tools
-   - Test with Azure AI agents
-
-### Exercise C: Advanced Integration
-
-1. **Multi-Server Orchestration**
-   - Connect multiple MCP servers
-   - Implement server discovery
-   - Create a server registry
-
-2. **Custom Protocol Extensions**
-   - Extend MCP with custom capabilities
-   - Maintain backward compatibility
-   - Document your extensions
-
 ## 🔍 Best Practices
 
 ### MCP Server Design
