@@ -1,30 +1,14 @@
 # Module 2: Tools - Advanced Agent Capabilities
 
-This module explores the powerful tools available to Azure AI Foundry agents, enabling them to perform complex tasks beyond simple text generation. Each tool expands your agent's capabilities in specific ways, from searching through documents to executing custom business logic.
+This module explores the tools available to Azure AI Foundry agents, enabling them to perform complex tasks beyond simple text generation. Each tool expands  agent's capabilities in specific ways, from searching through documents to executing custom business logic.
 
 ## 🎯 Module Overview
 
-Azure AI Foundry agents can be equipped with three fundamental tool types:
+Azure AI Foundry agents can be equipped with many tools. Here we explore three fundamental tool types:
 
 1. **[File Search](01-file-search.md)** - Retrieval Augmented Generation (RAG) capabilities
 2. **[Code Interpreter](02-code-interpreter.md)** - Python code execution and data analysis
 3. **[Function Calling](03-function-calling.md)** - Custom business logic integration
-
-## 📚 Learning Path
-
-### Prerequisites
-
-- Completion of [Module 1: Fundamentals](../01-fundamentals/README.md)
-- Basic understanding of Python and REST APIs
-- Familiarity with file formats (PDF, CSV, JSON, etc.)
-
-### Time Investment
-
-- **Total Time**: 4-5 hours
-- **File Search**: 90 minutes
-- **Code Interpreter**: 90 minutes  
-- **Function Calling**: 75 minutes
-- **Integration Practice**: 60 minutes
 
 ## 🔧 Tool Capabilities Matrix
 
@@ -44,32 +28,6 @@ Each tool lesson follows this structure:
 4. **Exercises** - Hands-on practice scenarios
 5. **Troubleshooting** - Common issues and solutions
 
-### Basic Tool Integration Pattern
-
-```python
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
-from azure.ai.agents.models import FileSearchTool, CodeInterpreterTool, FunctionTool
-
-# Create client
-client = AIProjectClient(
-    endpoint=os.getenv('PROJECT_ENDPOINT'),
-    credential=DefaultAzureCredential()
-)
-
-# Configure tools
-file_search = FileSearchTool()
-code_interpreter = CodeInterpreterTool()
-function_tool = FunctionTool(functions={custom_function})
-
-# Create agent with multiple tools
-agent = client.agents.create_agent(
-    model=os.getenv('MODEL_DEPLOYMENT_NAME'),
-    name="multi-tool-agent",
-    instructions="You are a comprehensive business assistant with access to multiple tools.",
-    tools=[file_search, code_interpreter, function_tool.definitions]
-)
-```
 
 ## 📖 Detailed Lessons
 
@@ -241,20 +199,6 @@ Implement an end-to-end data science pipeline:
 - Add logging for debugging
 - Use staging environments for testing
 
-## 📈 Advanced Topics
-
-### Custom Tool Development
-
-Learn to build your own tools by extending the base tool classes and implementing custom logic patterns.
-
-### Multi-Agent Tool Orchestration
-
-Coordinate multiple agents with different tool specializations to solve complex business problems.
-
-### Tool Performance Monitoring
-
-Implement metrics and monitoring to track tool usage, performance, and effectiveness.
-
 ## ➡️ Next Steps
 
 After mastering the tools in this module, you'll be ready to explore:
@@ -274,6 +218,3 @@ You've completed Module 2 when you can:
 ✅ **Optimize Performance** - Implement best practices for tool efficiency
 ✅ **Handle Errors** - Implement robust error handling and validation
 
----
-
-**💡 Pro Tip**: The real power of Azure AI Foundry agents comes from combining tools strategically. File Search provides knowledge, Code Interpreter handles analysis, and Function Calling enables action - together they create comprehensive business solutions.
