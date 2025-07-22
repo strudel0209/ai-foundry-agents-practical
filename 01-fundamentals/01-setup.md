@@ -51,7 +51,7 @@ This guide will walk you through setting up your development environment for Azu
    cd ai-agents-system
    ```
 
-2. **Create and activate virtual environment:**
+2. **Create and activate virtual environment (if not using DevContainers):**
    ```bash
    # Windows
    python -m venv .venv
