@@ -10,8 +10,6 @@ In this lesson, you'll master the fundamentals of creating Model Context Protoco
 - Create server-side protocol handling
 - Test MCP server functionality and integration
 
-## ⏱️ Estimated Time: 45 minutes
-
 ## 🧠 Key Concepts
 
 ### What is Model Context Protocol (MCP)?
