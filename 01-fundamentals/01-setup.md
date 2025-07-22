@@ -9,18 +9,15 @@ This guide will walk you through setting up your development environment for Azu
 - Configure authentication and environment variables
 - Validate your setup with a test connection
 
-## ⏱️ Estimated Time: 30 minutes
-
 ## 📋 Prerequisites
 
 - Azure subscription with Owner or Contributor permissions
 - Python 3.9+ installed
 - Git installed
-- Code editor (VS Code recommended)
 
 ## 🚀 Step-by-Step Setup
 
-### Step 1: Create Azure AI Foundry Project (10 minutes)
+### Step 1: Create Azure AI Foundry Project
 
 1. **Navigate to Azure AI Foundry portal:**
    - Go to [https://ai.azure.com](https://ai.azure.com)
@@ -32,7 +29,6 @@ This guide will walk you through setting up your development environment for Azu
    - Select your subscription and resource group
    - Choose a unique project name (e.g., "ai-agents-learning")
    - Select a region (recommend: East US 2, West US 2, or West Europe)
-   - Click "Create"
 
 3. **Deploy a model:**
    - In your project, go to "Models + endpoints"
@@ -40,7 +36,6 @@ This guide will walk you through setting up your development environment for Azu
    - Select "gpt-4o-mini" model
    - Use default deployment settings
    - Name your deployment "gpt-4o-mini"
-   - Click "Deploy"
 
 4. **Note your project details:**
    - Project endpoint (found in Overview page)
@@ -48,7 +43,7 @@ This guide will walk you through setting up your development environment for Azu
    - Resource group name
    - Project name
 
-### Step 2: Python Environment Setup (10 minutes)
+### Step 2: Python Environment Setup
 
 1. **Clone the repository:**
    ```bash
@@ -79,7 +74,7 @@ This guide will walk you through setting up your development environment for Azu
    python -c "import azure.identity; print('Azure Identity SDK installed successfully')"
    ```
 
-### Step 3: Authentication Setup (5 minutes)
+### Step 3: Authentication Setup
 
 1. **Install Azure CLI (if not already installed):**
    - Download from [https://docs.microsoft.com/en-us/cli/azure/install-azure-cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli)
@@ -94,12 +89,7 @@ This guide will walk you through setting up your development environment for Azu
    az account set --subscription "your-subscription-id"
    ```
 
-4. **Verify authentication:**
-   ```bash
-   az account show
-   ```
-
-### Step 4: Environment Variables Configuration (5 minutes)
+### Step 4: Environment Variables Configuration
 
 1. **Copy the environment template:**
    ```bash
@@ -119,92 +109,9 @@ This guide will walk you through setting up your development environment for Azu
    LOG_LEVEL=INFO
    ENVIRONMENT=development
    ```
-
-3. **Secure your .env file:**
-   ```bash
-   # Add .env to .gitignore if not already there
-   echo ".env" >> .gitignore
-   ```
-
 ## ✅ Validation
 
 Run the following validation script to ensure everything is set up correctly:
-
-```python
-# exercises/exercise_1_setup.py
-import os
-import asyncio
-from dotenv import load_dotenv
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
-
-async def validate_setup():
-    """Validate Azure AI Foundry setup"""
-    load_dotenv()
-    
-    # Check environment variables
-    required_vars = [
-        'PROJECT_ENDPOINT',
-        'MODEL_DEPLOYMENT_NAME',
-        'AZURE_SUBSCRIPTION_ID',
-        'PROJECT_NAME'
-    ]
-    
-    print("🔍 Checking environment variables...")
-    for var in required_vars:
-        if not os.getenv(var):
-            print(f"❌ Missing required environment variable: {var}")
-            return False
-        else:
-            print(f"✅ {var}: Set")
-    
-    # Test Azure authentication
-    print("\n🔐 Testing Azure authentication...")
-    try:
-        credential = DefaultAzureCredential()
-        # Get a token to verify authentication works
-        token = credential.get_token("https://management.azure.com/.default")
-        print("✅ Azure authentication successful")
-    except Exception as e:
-        print(f"❌ Azure authentication failed: {e}")
-        return False
-    
-    # Test Azure AI Project connection
-    print("\n🤖 Testing Azure AI Project connection...")
-    try:
-        client = AIProjectClient(
-            endpoint=os.getenv('PROJECT_ENDPOINT'),
-            credential=DefaultAzureCredential()
-        )
-        
-        # List deployments to verify connection
-        deployments = list(client.deployments.list())
-        print(f"✅ Connected to Azure AI Project successfully")
-        print(f"✅ Found {len(deployments)} model deployments")
-        
-        # Check if our target model is deployed
-        target_model = os.getenv('MODEL_DEPLOYMENT_NAME')
-        model_found = any(d.name == target_model for d in deployments)
-        if model_found:
-            print(f"✅ Target model '{target_model}' found and accessible")
-        else:
-            print(f"⚠️  Target model '{target_model}' not found. Available models:")
-            for d in deployments:
-                print(f"   - {d.name}")
-    
-    except Exception as e:
-        print(f"❌ Azure AI Project connection failed: {e}")
-        return False
-    
-    print("\n🎉 Setup validation completed successfully!")
-    print("You're ready to create your first agent!")
-    return True
-
-if __name__ == "__main__":
-    asyncio.run(validate_setup())
-```
-
-Run the validation:
 ```bash
 cd 01-fundamentals
 python exercises/exercise_1_setup.py
@@ -253,6 +160,3 @@ Before proceeding to the next lesson, ensure:
 
 Once your setup validation passes, proceed to [Creating Your First Agent](./02-basic-agent.md).
 
----
-
-**Need help?** Check the [troubleshooting section](#-troubleshooting) above or review the [FAQ](../docs/FAQ.md).

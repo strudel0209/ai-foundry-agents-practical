@@ -1,6 +1,6 @@
 # Module 1: Azure AI Foundry Agent Fundamentals
 
-Welcome to the foundational module of your Azure AI Foundry agents learning journey! This module will establish the core concepts and practical skills needed to work with Azure AI Foundry agents.
+ This module sets basis for the core concepts and practical skills needed to work with Azure AI Foundry agents.
 
 ## 🎯 Module Objectives
 
@@ -19,37 +19,28 @@ By the end of this module, you will:
 - Basic understanding of Python and REST APIs
 - Git for version control
 
-## 🕒 Estimated Time: 2-3 hours
-
 ## 📚 Learning Path
 
-### 1. [Environment Setup](./01-setup.md) - 30 minutes
+### 1. [Environment Setup](./01-setup.md)
 Learn how to:
 - Configure Azure AI Foundry project
 - Set up Python development environment
 - Configure authentication and environment variables
 - Validate your setup
 
-### 2. [Creating Your First Agent](./02-basic-agent.md) - 45 minutes
+### 2. [Creating Your First Agent](./02-basic-agent.md)
 Learn how to:
 - Initialize the Azure AI Project client
 - Create a basic agent with instructions
 - Understand agent configuration options
 - Test your agent
 
-### 3. [Understanding Threads and Runs](./03-threads-runs.md) - 45 minutes
+### 3. [Understanding Threads and Runs](./03-threads-runs.md)
 Learn how to:
 - Create conversation threads
 - Start and monitor agent runs
 - Handle run states and polling
 - Retrieve and display messages
-
-### 4. [Agent Lifecycle Management](./04-lifecycle.md) - 30 minutes
-Learn how to:
-- List and retrieve agents
-- Update agent configurations
-- Delete agents and cleanup resources
-- Best practices for agent management
 
 ## 🏗️ Project Structure
 
@@ -59,20 +50,11 @@ Learn how to:
 ├── 01-setup.md              # Environment setup guide
 ├── 02-basic-agent.md         # First agent creation
 ├── 03-threads-runs.md        # Threads and runs deep dive
-├── 04-lifecycle.md           # Agent lifecycle management
 ├── exercises/                # Hands-on exercises
 │   ├── exercise_1_setup.py
 │   ├── exercise_2_basic_agent.py
 │   ├── exercise_3_conversation.py
-│   └── exercise_4_management.py
-├── solutions/                # Exercise solutions
-│   ├── solution_1_setup.py
-│   ├── solution_2_basic_agent.py
-│   ├── solution_3_conversation.py
-│   └── solution_4_management.py
-└── assets/                   # Sample files and data
-    ├── sample_instructions.txt
-    └── test_conversation.json
+
 ```
 
 ## 🎯 Key Concepts Covered
@@ -133,8 +115,7 @@ By the end of this module, you should be able to:
 ✅ Implement agent reuse patterns to prevent duplicate agents  
 ✅ Start conversations using threads and process them with runs  
 ✅ Handle different run states and retrieve conversation history  
-✅ Manage agent lifecycle including creation, updates, and deletion  
-✅ Implement basic error handling and logging using correct SDK methods  
+✅ Manage agent lifecycle including creation, updates, and deletion   
 
 ## 🔍 Common Issues and Troubleshooting
 
@@ -163,22 +144,5 @@ By the end of this module, you should be able to:
 ### Code Examples
 - [Azure SDK Python Samples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/ai/azure-ai-projects/samples)
 - [Agent Examples](https://github.com/Azure/azure-sdk-for-python/tree/main/sdk/ai/azure-ai-agents/samples)
-
-## ➡️ Next Steps
-
-Once you complete this module:
-
-1. **Review your learning** by going through the exercises again
-2. **Experiment** with different agent instructions and configurations
-3. **Move to Module 2** - [Tools Exploration](../02-tools-exploration/README.md)
-
-## 🤝 Support
-
-If you encounter issues:
-- Review the troubleshooting section above
-- Check the [FAQ](../docs/FAQ.md)
-- Open an issue in the repository
-
----
 
 **Ready to begin?** Start with [Environment Setup](./01-setup.md) 🚀
