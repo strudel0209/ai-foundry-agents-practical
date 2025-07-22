@@ -1,18 +1,17 @@
 # Azure AI Foundry Agents Learning System
 
-A comprehensive, hands-on learning system for building production-ready AI agents with Azure AI Foundry, including native Model Context Protocol (MCP) support, multi-agent orchestration, and enterprise deployment patterns.
+A hands-on learning repo for building from basic AI agents to Agents geared with tools and functions in Azure AI Foundry,including native Model Context Protocol (MCP) support and multi-agent orchestration with Semantic Kernel.
 
 ## 🎯 What You'll Build
 
 - **Intelligent AI Agents** with Azure AI Foundry's native capabilities
 - **Multi-Agent Systems** using Semantic Kernel orchestration
 - **MCP Servers** for extending agents with external tools and databases
-- **Production-Ready Solutions** with monitoring, scaling, and security
 
 ## 📋 Prerequisites
 
 - **Azure Subscription** with Contributor access
-- **Python 3.11+** (Python 3.12+ recommended for MCP features)
+- **Python 3.11+** (Python 3.12+ recommended for MCP integration)
 - **Azure AI Foundry Project** with deployed models (e.g., gpt-4o-mini)
 - **Azure CLI** authenticated (`az login`)
 - **Docker Desktop** (for containerized deployments)
