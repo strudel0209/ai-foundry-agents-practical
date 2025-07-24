@@ -34,7 +34,7 @@
   "postStartCommand": "echo '🚀 Dev container ready! Python $(python --version) and Node $(node --version) installed.'",
   
   "mounts": [
-    "source=${localWorkspaceFolder}/04-mcp/exercises/mcp-config,target=/workspaces/ai-agents-system/04-mcp/exercises/mcp-config,type=bind,consistency=cached"
+    "source=${localWorkspaceFolder}/04-mcp/exercises/scripts/mcp-config,target=/workspaces/ai-agents-system/04-mcp/exercises/scripts/mcp-config,type=bind,consistency=cached"
   ],
   
   "forwardPorts": [3000, 8080],
