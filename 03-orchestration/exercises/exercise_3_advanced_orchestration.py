@@ -27,15 +27,63 @@ from semantic_kernel.data.vector import (
     vectorstoremodel,
 )
 
-from azure.ai.projects import AIProjectClient
+from azure.ai.projects import AIProjectClient, enable_telemetry
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
 from azure.search.documents.indexes.aio import SearchIndexClient
 from azure.search.documents.indexes.models import SearchIndex, SimpleField, VectorSearch, HnswParameters, VectorSearchAlgorithmConfiguration
 
+from opentelemetry import trace
+from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from azure.monitor.opentelemetry import configure_azure_monitor
+
 # Data model for memory records
 from dataclasses import dataclass
 from typing import Optional as Opt
+
+# Load environment variables
+load_dotenv()
+
+# === Tracing setup ===
+# Set a consistent service name and enable content capture
+os.environ.setdefault("OTEL_SERVICE_NAME", "sk-advanced-agents")
+os.environ.setdefault("AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED", "true")
+# Enable Azure SDK/Agents telemetry hooks
+try:
+    enable_telemetry()
+except Exception:
+    pass
+
+# Configure Azure Monitor exporter: prefer env; fallback to AI Project telemetry
+try:
+    _conn = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+    if not _conn:
+        # Prefer standard env var name; fall back to legacy if present
+        _proj_ep = os.getenv("AZURE_AI_PROJECT_ENDPOINT") or os.getenv("PROJECT_ENDPOINT")
+        if _proj_ep:
+            try:
+                _tmp = AIProjectClient(endpoint=_proj_ep, credential=DefaultAzureCredential())
+                _conn = _tmp.telemetry.get_application_insights_connection_string()
+            except Exception as e:
+                print(f"⚠️ Unable to fetch Application Insights connection from project endpoint: {e}")
+    if _conn:
+        # Correct signature: only pass the connection string
+        configure_azure_monitor(connection_string=_conn)
+        LoggingInstrumentor().instrument(set_logging_format=True)
+        print("✅ Azure Monitor tracing configured")
+    else:
+        print(
+            "⚠️ No Application Insights connection string found. Traces will not appear in Azure AI Foundry.\n"
+            "   Fix: Attach an Application Insights resource to your Foundry project (Portal > Tracing), then either:\n"
+            "   - Set APPLICATIONINSIGHTS_CONNECTION_STRING, or\n"
+            "   - Set AZURE_AI_PROJECT_ENDPOINT (or PROJECT_ENDPOINT) so the SDK can discover it."
+        )
+except Exception as e:
+    # If config fails, traces will not be exported but app behavior remains unchanged
+    print(f"⚠️ Azure Monitor tracing not configured: {e}")
+
+# Get a tracer to annotate key flows with spans
+_tracer = trace.get_tracer(__name__)
 
 @vectorstoremodel(collection_name="agent_workflow_memory")
 @dataclass
@@ -247,6 +295,7 @@ class MultiAgentOrchestrator:
         except Exception as e:
             print(f"⚠️ Could not verify/create Azure AI Search index: {e}")
     
+    @_tracer.start_as_current_span("memory.save")
     async def _save_to_memory(self, agent_name: str, request: str, response: str, context: Dict = None):
         """Save interaction to vector memory with embeddings"""
 
@@ -282,6 +331,7 @@ class MultiAgentOrchestrator:
         await self.memory_collection.upsert(record)
         print(f"💾 Saved to memory: {agent_name} interaction")
     
+    @_tracer.start_as_current_span("memory.search")
     async def _search_memory(self, query: str, top_k: int = 3, filters: Optional[Dict] = None) -> List[Dict]:
         """Search vector memory for relevant past interactions with optional filtering"""
 
@@ -338,6 +388,7 @@ class MultiAgentOrchestrator:
             print(f"⚠️ Error during memory search: {e}")
             return []
     
+    @_tracer.start_as_current_span("agents.register")
     async def register_agent(self, name: str, agent_type: str, capabilities: List[str]):
         """Register an Azure AI Foundry agent with the orchestrator"""
         
@@ -396,6 +447,7 @@ class MultiAgentOrchestrator:
             print(f"❌ Failed to register agent {name}: {e}")
             raise
     
+    @_tracer.start_as_current_span("agents.route_request")
     async def route_request(self, request: str, context: Optional[Dict] = None) -> str:
         """Intelligently route requests to appropriate agents with memory context"""
         
@@ -451,6 +503,7 @@ class MultiAgentOrchestrator:
         else:
             return await self._execute_collaborative_workflow(selected_agents, request, context)
     
+    @_tracer.start_as_current_span("agents.execute_single")
     async def _execute_single_agent(self, agent_name: str, request: str, context: Optional[Dict]) -> str:
         """Execute request with a single agent and save to memory"""
         
@@ -527,6 +580,7 @@ class MultiAgentOrchestrator:
             return str(msg.content)
         return ""
     
+    @_tracer.start_as_current_span("agents.execute_collaborative")
     async def _execute_collaborative_workflow(self, agent_names: List[str], request: str, context: Optional[Dict]) -> str:
         """Execute collaborative workflow with multiple agents using memory context"""
         
@@ -729,6 +783,7 @@ class MultiAgentOrchestrator:
         
         return results
 
+@_tracer.start_as_current_span("demo.sem_kernel_orchestration")
 async def demonstrate_semantic_kernel_orchestration():
     """Main demonstration of Semantic Kernel orchestration with memory"""
 
@@ -782,6 +837,14 @@ async def demonstrate_semantic_kernel_orchestration():
         
         print(f"📄 Results saved to {output_dir}/advanced_orchestration_results.json")
         
+        # Ensure spans are exported before process exits
+        try:
+            provider = trace.get_tracer_provider()
+            if hasattr(provider, "force_flush"):
+                provider.force_flush()
+        except Exception:
+            pass
+
         return workflow_results
 
     except Exception as e:
