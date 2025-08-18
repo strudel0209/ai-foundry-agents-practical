@@ -106,16 +106,6 @@ Learn how to:
    - Complete the exercises
    - Check your solutions
 
-## 📊 Success Criteria
-
-By the end of this module, you should be able to:
-
-✅ Create an Azure AI Foundry project and configure authentication  
-✅ Initialize an AIProjectClient and create agents programmatically  
-✅ Implement agent reuse patterns to prevent duplicate agents  
-✅ Start conversations using threads and process them with runs  
-✅ Handle different run states and retrieve conversation history  
-✅ Manage agent lifecycle including creation, updates, and deletion   
 
 ## 🔍 Common Issues and Troubleshooting
 

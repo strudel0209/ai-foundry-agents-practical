@@ -8,7 +8,7 @@ This guide shows how to use the official mcp-sqlite server with Azure AI Foundry
 - **OR** Node.js/npm for the JavaScript version
 - **OR** Python 3.11+ for the reference implementation
 
-## Quick Start (1 minute)
+## Quick Start
 
 ### Option 1: Automatic Setup (Recommended)
 

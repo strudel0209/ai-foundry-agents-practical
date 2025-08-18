@@ -1,4 +1,4 @@
-# Connected agents in Azure AI Foundry (2025)
+# Connected agents in Azure AI Foundry
 
 Connected agents let a primary agent call other specialized agents as tools during a run. This enables multi-agent orchestration using native tool-calling—no custom router or middleware required.
 
