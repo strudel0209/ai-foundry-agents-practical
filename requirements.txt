@@ -1,6 +1,6 @@
 # Core Azure AI Foundry dependencies
 azure-ai-projects>=1.0.0b12
-azure-ai-agents>=1.1.0b2
+ azure-ai-agents>=1.1.0b2   #1.2.0b2 - this is needed for sharepoint agent  #1.1.0b2 - this is needed for sk tracing!
 azure-identity>=1.17.1
 azure-core>=1.30.2
 

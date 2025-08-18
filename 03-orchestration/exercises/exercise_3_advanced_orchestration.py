@@ -1,8 +1,7 @@
 """
 Advanced Semantic Kernel Integration with Azure AI Foundry Agents
 
-This module demonstrates multi-agent orchestration using Semantic Kernel,
-implementing complex workflows and agent collaboration patterns.
+This module demonstrates multi-agent orchestration using Semantic Kernel,implementing complex workflows and agent collaboration patterns.
 """
 
 import os
@@ -31,7 +30,10 @@ from azure.ai.projects import AIProjectClient, enable_telemetry
 from azure.identity import DefaultAzureCredential
 from azure.core.exceptions import ResourceNotFoundError
 from azure.search.documents.indexes.aio import SearchIndexClient
-from azure.search.documents.indexes.models import SearchIndex, SimpleField, VectorSearch, HnswParameters, VectorSearchAlgorithmConfiguration
+from azure.search.documents.indexes.models import SearchIndex, SearchField, SearchFieldDataType, VectorSearch, VectorSearchProfile, HnswAlgorithmConfiguration
+from azure.search.documents.aio import SearchClient
+import uuid
+from datetime import datetime
 
 from opentelemetry import trace
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
@@ -73,10 +75,7 @@ try:
         print("✅ Azure Monitor tracing configured")
     else:
         print(
-            "⚠️ No Application Insights connection string found. Traces will not appear in Azure AI Foundry.\n"
-            "   Fix: Attach an Application Insights resource to your Foundry project (Portal > Tracing), then either:\n"
-            "   - Set APPLICATIONINSIGHTS_CONNECTION_STRING, or\n"
-            "   - Set AZURE_AI_PROJECT_ENDPOINT (or PROJECT_ENDPOINT) so the SDK can discover it."
+            "⚠️ No Application Insights connection string found."
         )
 except Exception as e:
     # If config fails, traces will not be exported but app behavior remains unchanged
@@ -822,10 +821,6 @@ async def demonstrate_semantic_kernel_orchestration():
             workflow_results["memory_demonstration"] = demo
         
         print("\n🎉 Advanced Multi-Agent Orchestration Complete!")
-        print("✅ Intelligent routing with memory context")
-        print("✅ Collaborative workflows with history awareness")
-        print("✅ Vector memory integration for context retention")
-        print("✅ Semantic Kernel advanced features demonstrated")
         
         # Save results
         from pathlib import Path
