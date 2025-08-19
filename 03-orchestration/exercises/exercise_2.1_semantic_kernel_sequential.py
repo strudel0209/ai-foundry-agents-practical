@@ -1,11 +1,16 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import asyncio
+import os
+from dotenv import load_dotenv
 
 from semantic_kernel.agents import Agent, ChatCompletionAgent, SequentialOrchestration
 from semantic_kernel.agents.runtime import InProcessRuntime
 from semantic_kernel.connectors.ai.open_ai import AzureChatCompletion
 from semantic_kernel.contents import ChatMessageContent
+
+# Load environment variables from .env file if it exists
+load_dotenv()
 
 """
 The following sample demonstrates how to create a sequential orchestration for
@@ -23,6 +28,16 @@ def get_agents() -> list[Agent]:
 
     Feel free to add or remove agents.
     """
+    # Create a shared AzureChatCompletion service instance
+    # The service will automatically pick up configuration from environment variables:
+    # AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_API_KEY, AZURE_OPENAI_CHAT_DEPLOYMENT_NAME
+    azure_service = AzureChatCompletion(
+        deployment_name=os.getenv("MODEL_DEPLOYMENT_NAME", "gpt-4o"),
+        api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+        endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
+    )
+    
     concept_extractor_agent = ChatCompletionAgent(
         name="ConceptExtractorAgent",
         instructions=(
@@ -31,7 +46,7 @@ def get_agents() -> list[Agent]:
             "- Target audience\n"
             "- Unique selling points\n\n"
         ),
-        service=AzureChatCompletion(),
+        service=azure_service,
     )
     writer_agent = ChatCompletionAgent(
         name="WriterAgent",
@@ -40,7 +55,7 @@ def get_agents() -> list[Agent]:
             "compose a compelling marketing copy (like a newsletter section) that highlights these points. "
             "Output should be short (around 150 words), output just the copy as a single text block."
         ),
-        service=AzureChatCompletion(),
+        service=azure_service,
     )
     format_proof_agent = ChatCompletionAgent(
         name="FormatProofAgent",
@@ -48,7 +63,7 @@ def get_agents() -> list[Agent]:
             "You are an editor. Given the draft copy, correct grammar, improve clarity, ensure consistent tone, "
             "give format and make it polished. Output the final improved copy as a single text block."
         ),
-        service=AzureChatCompletion(),
+        service=azure_service,
     )
 
     # The order of the agents in the list will be the order in which they are executed
