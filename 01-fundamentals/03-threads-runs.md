@@ -31,63 +31,102 @@ In this lesson, you'll master the conversation flow in Azure AI Foundry agents t
 
 ## 💡 How the Code Works
 
-The provided exercise demonstrates advanced conversation management using Azure AI Foundry agents. Here's what it does:
+The provided exercise demonstrates three key aspects of conversation management using Azure AI Foundry agents:
 
-### 1. ConversationManager Class
+### 1. Single Thread Conversation (Demo 1)
 
-- **Purpose:** Manages multiple conversation threads, tracks history, and coordinates agent interactions.
-- **Features:** 
-  - Creates new threads for different scenarios.
-  - Adds messages to threads, recording user and assistant exchanges.
-  - Maintains a structured history for each conversation.
+- **Purpose:** Shows how a single thread maintains conversation context across multiple messages.
+- **Implementation:** 
+  - Creates one thread that persists throughout the conversation
+  - Sends a series of related messages that build on each other
+  - Agent remembers user's name (Alice) and preferences (hiking)
+  - Demonstrates context retention within a single conversation session
 
-### 2. Creating and Managing Threads
+### 2. Thread Isolation (Demo 2)
 
-- **Thread Creation:** Each scenario or user session starts with a new thread, ensuring isolated context.
-- **Message Addition:** User messages are appended to the thread, and the agent's responses are tracked.
+- **Purpose:** Demonstrates that different threads maintain completely separate contexts.
+- **Implementation:**
+  - Creates two separate threads with different "users" (Bob and Carol)
+  - Each thread has its own conversation history
+  - When asked "What do you remember about me?", each thread gives different answers
+  - Shows that threads are isolated conversation containers
 
-### 3. Executing Runs and Monitoring Status
+### 3. Thread Persistence (Demo 3)
 
-- **Run Execution:** For each user message, a run is started to process the thread and generate a response.
-- **Status Polling:** The code continuously monitors the run status (`queued`, `in_progress`, `requires_action`, `completed`, etc.), providing live feedback.
-- **Run Steps:** Detailed execution steps are retrieved, showing tool calls, message creation, and other agent actions.
+- **Purpose:** Shows how threads can be resumed using their IDs.
+- **Implementation:**
+  - Reuses the thread from Demo 1
+  - Simulates a user returning to a previous conversation
+  - Agent recalls the entire conversation history
+  - Demonstrates that threads persist and can be accessed later
 
-### 4. Handling Tool Execution
+### Key Components Explained:
 
-- **Tool Calls:** If the agent needs to use a tool (e.g., calculator, time lookup), the code simulates tool execution and submits outputs back to the run.
-- **Approval Workflow:** The code handles `requires_action` states, ensuring tool outputs are provided as needed.
+#### ConversationDemo Class
+- Manages the Azure AI client connection
+- Creates and manages agents with specific instructions for demonstrating memory
+- Provides helper methods for sending messages and extracting responses
 
-### 5. Conversation History and Export
+#### Message Flow
+1. **Create Thread:** Start a new conversation session
+2. **Send Message:** Add user messages to the thread
+3. **Create Run:** Process the thread to generate a response
+4. **Monitor Status:** Wait for run completion
+5. **Extract Response:** Retrieve the assistant's message
 
-- **History Tracking:** All messages and responses are stored, allowing for review and export.
-- **Export:** Conversations can be saved to JSON files for analysis or auditing.
-
-### 6. Scenario Demonstrations
-
-- **Multi-Turn Q&A:** Shows how the agent maintains context across multiple exchanges.
-- **Tool Usage:** Demonstrates agent-initiated tool calls and result handling.
-- **Context Retention:** Validates the agent's ability to remember and reference earlier information.
+#### Helper Methods
+- `_send_message_to_thread()`: Simplified method to send messages to any thread
+- `_extract_message_content()`: Handles different message content structures
+- `_show_thread_summary()`: Displays a table of conversation turns
+- `_show_thread_history()`: Shows the complete conversation history
 
 ---
 
-## 🔍 Azure AI Foundry Agent Features for Threads and Runs
+## 🔍 Azure AI Foundry Agent Features Demonstrated
 
-- **Persistent Threads:** Maintain full conversation history for context-aware responses.
-- **Flexible Message Handling:** Support for text, images, and files in messages.
-- **Run Monitoring:** Track run status, execution steps, and tool calls for transparency and debugging.
-- **Tool Integration:** Agents can invoke tools during runs, with support for approval workflows and output submission.
-- **Conversation Isolation:** Each thread is independent, enabling multiple concurrent sessions.
-- **Export & Audit:** Conversation data can be exported for compliance, analysis, or training.
+### Thread Management
+- **Thread Creation:** `project_client.agents.threads.create()`
+- **Thread Persistence:** Threads remain accessible via their IDs
+- **Thread Isolation:** Each thread maintains its own context
+
+### Message Handling
+- **Message Creation:** `project_client.agents.messages.create()`
+- **Message Listing:** `project_client.agents.messages.list()`
+- **Content Extraction:** Support for various message content formats
+
+### Run Processing
+- **Run Creation:** `project_client.agents.runs.create_and_process()`
+- **Status Monitoring:** Automatic polling until completion
+- **Error Handling:** Checks run status before retrieving responses
 
 ---
 
-## 📊 Why Monitoring Threads and Runs Matters
+## 📊 Best Practices for Threads and Runs
 
-- **Reliability:** Ensures agents complete tasks and respond appropriately.
-- **Debugging:** Identifies where runs fail or require intervention.
-- **Performance:** Tracks execution times and tool usage for optimization.
-- **Security & Compliance:** Maintains audit trails of all interactions.
-- **User Experience:** Enables seamless, context-rich conversations.
+### Thread Usage Patterns
+- **One Thread Per Conversation:** Use a single thread for each user session
+- **Thread Reuse:** Resume threads for returning users
+- **Thread Isolation:** Create new threads for unrelated conversations
+
+### Run Management
+- **Status Checking:** Always verify run completion before reading responses
+- **Error Handling:** Handle failed runs gracefully
+- **Timeout Management:** Consider implementing timeouts for long-running operations
+
+### Message Handling
+- **Content Validation:** Check message content structure before accessing
+- **Chronological Order:** Messages are returned in reverse chronological order
+- **Role Filtering:** Filter messages by role (user/assistant) when needed
+
+---
+
+## 🎯 Key Takeaways
+
+1. **Threads = Conversation Sessions:** Each thread represents a complete conversation with maintained context
+2. **Messages = Individual Interactions:** User inputs and agent responses stored sequentially
+3. **Runs = Processing Units:** Execute agent logic and generate responses
+4. **Isolation = Privacy:** Threads don't share context, ensuring conversation privacy
+5. **Persistence = Continuity:** Threads can be resumed anytime using their IDs
 
 ---
 

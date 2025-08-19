@@ -1,490 +1,311 @@
+#!/usr/bin/env python3
 """
-Exercise 3: Advanced Conversation Management
+Exercise 3: Understanding Threads and Conversation History
 
-This exercise demonstrates advanced thread and run management patterns
-in Azure AI Foundry agents, including tool execution, error handling,
-and conversation history management.
-
-Prerequisites:
-- Complete exercise_2_basic_agent.py successfully
-- Agent creation working properly
+This exercise demonstrates:
+1. How threads maintain conversation history
+2. How agents remember context across multiple interactions
+3. How to manage and inspect thread state
 """
 
 import os
 import time
-import asyncio
-import json
-from typing import List, Dict, Any
 from dotenv import load_dotenv
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
 from rich.console import Console
-from rich.live import Live
-from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
+from rich.markdown import Markdown
 
 console = Console()
+load_dotenv()
 
-class ConversationManager:
-    """Advanced conversation management with history tracking"""
+class ConversationDemo:
+    def __init__(self):
+        """Initialize the conversation demo with Azure AI client"""
+        self.project_client = AIProjectClient(
+            endpoint=os.environ["PROJECT_ENDPOINT"],
+            credential=DefaultAzureCredential()
+        )
+        self.agent = None
+        self.thread = None
     
-    def __init__(self, project_client: AIProjectClient):
-        self.client = project_client
-        self.conversation_history = []
-        self.active_threads = {}
+    def create_agent(self):
+        """Create an agent optimized for demonstrating conversation memory"""
+        instructions = """
+        You are a helpful AI assistant that demonstrates conversation memory.
+        Key behaviors:
+        - Remember all previous messages in our conversation
+        - Reference earlier topics when relevant
+        - Keep track of user preferences and information shared
+        - Acknowledge when you're recalling something from earlier
         
-    def create_conversation(self, name: str) -> str:
-        """Create a new conversation thread"""
-        thread = self.client.agents.threads.create()
-        self.active_threads[name] = {
-            "thread_id": thread.id,
-            "created_at": time.time(),
-            "message_count": 0
-        }
-        return thread.id
+        When asked about conversation history, provide specific examples
+        of what you remember from our chat.
+        """
+        
+        self.agent = self.project_client.agents.create_agent(
+            model=os.environ["MODEL_DEPLOYMENT_NAME"],
+            name="conversation-memory-demo",
+            instructions=instructions
+        )
+        console.print(f"✅ Created agent: {self.agent.name}")
+        return self.agent
     
-    def add_message(self, thread_id: str, content: str, role: str = "user") -> Dict:
-        """Add message to thread and track in history"""
-        message = self.client.agents.messages.create(
+    def demonstrate_single_thread_conversation(self):
+        """Show how a single thread maintains conversation history"""
+        console.print(Panel.fit(
+            "🧵 [bold]Demo 1: Single Thread Conversation[/bold]\n"
+            "Showing how context is maintained across messages",
+            style="blue"
+        ))
+        
+        # Create one thread for the entire conversation
+        self.thread = self.project_client.agents.threads.create()
+        console.print(f"📝 Created thread: {self.thread.id}\n")
+        
+        # Series of related messages that build on each other
+        conversation_flow = [
+            "Hi! My name is Alice and I love hiking.",
+            "What's your favorite outdoor activity?",
+            "Can you remind me what my name is?",
+            "What did I tell you I enjoy doing?",
+            "Based on what you know about me, what would you recommend I do this weekend?"
+        ]
+        
+        for i, message in enumerate(conversation_flow, 1):
+            console.print(f"\n[bold cyan]Turn {i}:[/bold cyan]")
+            console.print(f"👤 User: {message}")
+            
+            # Send message
+            self.project_client.agents.messages.create(
+                thread_id=self.thread.id,
+                role="user",
+                content=message
+            )
+            
+            # Create and process run
+            run = self.project_client.agents.runs.create_and_process(
+                thread_id=self.thread.id,
+                agent_id=self.agent.id
+            )
+            
+            # Get response
+            if run.status == "completed":
+                messages = self.project_client.agents.messages.list(
+                    thread_id=self.thread.id
+                )
+                
+                # Find the latest assistant message
+                for msg in messages:
+                    if msg.role == "assistant" and hasattr(msg, 'created_at'):
+                        # Get the most recent assistant message
+                        if not hasattr(self, '_last_message_time') or msg.created_at > self._last_message_time:
+                            self._last_message_time = msg.created_at
+                            response = self._extract_message_content(msg)
+                            console.print(f"🤖 Assistant: {response}")
+                            break
+            
+            time.sleep(1)  # Brief pause between turns
+        
+        # Show thread summary
+        self._show_thread_summary()
+    
+    def demonstrate_multiple_threads_isolation(self):
+        """Show how different threads don't share context"""
+        console.print(Panel.fit(
+            "🧵 [bold]Demo 2: Thread Isolation[/bold]\n"
+            "Showing how different threads maintain separate contexts",
+            style="yellow"
+        ))
+        
+        # Create two separate threads
+        thread1 = self.project_client.agents.threads.create()
+        thread2 = self.project_client.agents.threads.create()
+        
+        console.print(f"📝 Created Thread 1: {thread1.id}")
+        console.print(f"📝 Created Thread 2: {thread2.id}\n")
+        
+        # Thread 1: Introduce as Bob who likes cooking
+        console.print("[bold]Thread 1 Conversation:[/bold]")
+        self._send_message_to_thread(
+            thread1.id, 
+            "Hi, I'm Bob and I love cooking Italian food."
+        )
+        
+        # Thread 2: Introduce as Carol who likes painting
+        console.print("\n[bold]Thread 2 Conversation:[/bold]")
+        self._send_message_to_thread(
+            thread2.id, 
+            "Hello, I'm Carol and I enjoy painting landscapes."
+        )
+        
+        # Thread 1: Ask what the agent remembers
+        console.print("\n[bold]Back to Thread 1:[/bold]")
+        self._send_message_to_thread(
+            thread1.id, 
+            "What do you remember about me?"
+        )
+        
+        # Thread 2: Ask what the agent remembers
+        console.print("\n[bold]Back to Thread 2:[/bold]")
+        self._send_message_to_thread(
+            thread2.id, 
+            "What do you remember about me?"
+        )
+        
+        console.print("\n💡 [bold]Note:[/bold] Each thread maintains its own conversation history!")
+    
+    def demonstrate_thread_persistence(self):
+        """Show how to resume a conversation using thread ID"""
+        console.print(Panel.fit(
+            "🧵 [bold]Demo 3: Thread Persistence[/bold]\n"
+            "Showing how to resume conversations using thread IDs",
+            style="green"
+        ))
+        
+        if not self.thread:
+            console.print("❌ No existing thread to resume. Run Demo 1 first!")
+            return
+        
+        thread_id = self.thread.id
+        console.print(f"📎 Resuming thread: {thread_id}\n")
+        
+        # Simulate "coming back later" to the conversation
+        console.print("[dim]Simulating user returning to conversation...[/dim]\n")
+        time.sleep(2)
+        
+        # Resume the conversation
+        self._send_message_to_thread(
+            thread_id,
+            "Hi again! Do you remember our conversation from earlier? What did we discuss?"
+        )
+        
+        # Show that the full history is still available
+        self._show_thread_history(thread_id)
+    
+    def _send_message_to_thread(self, thread_id, content):
+        """Helper to send a message to a specific thread"""
+        console.print(f"👤 User: {content}")
+        
+        # Create message
+        self.project_client.agents.messages.create(
             thread_id=thread_id,
-            role=role,
+            role="user",
             content=content
         )
         
-        history_entry = {
-            "role": role,
-            "content": content,
-            "timestamp": time.time(),
-            "message_id": message.id,
-            "thread_id": thread_id
-        }
-        
-        self.conversation_history.append(history_entry)
-        
-        # Update thread stats
-        for thread_name, thread_info in self.active_threads.items():
-            if thread_info["thread_id"] == thread_id:
-                thread_info["message_count"] += 1
-                break
-        
-        return history_entry
-    
-    async def execute_run_with_monitoring(self, thread_id: str, agent_id: str) -> Dict:
-        """Execute agent run with comprehensive monitoring"""
-        
-        console.print(f"\n🏃 [bold]Starting agent run...[/bold]")
-        
-        # Create run
-        run = self.client.agents.runs.create(
+        # Process run
+        run = self.project_client.agents.runs.create_and_process(
             thread_id=thread_id,
-            agent_id=agent_id
+            agent_id=self.agent.id
         )
         
-        console.print(f"Run ID: [dim]{run.id}[/dim]")
-        
-        # Monitor with live table
-        status_table = Table()
-        status_table.add_column("Status", style="cyan")
-        status_table.add_column("Duration", style="green")
-        status_table.add_column("Steps", style="yellow")
-        status_table.add_column("Details", style="white")
-        
-        start_time = time.time()
-        step_count = 0
-        
-        with Live(status_table, refresh_per_second=2, console=console) as live:
-            while True:
-                run = self.client.agents.runs.get(thread_id=thread_id, run_id=run.id)
-                elapsed = time.time() - start_time
-                
-                # Get run steps
-                try:
-                    run_steps = self.client.agents.runs.steps.list(
-                        thread_id=thread_id,
-                        run_id=run.id
-                    )
-                    step_count = len(run_steps.data) if run_steps.data else 0
-                except:
-                    step_count = 0
-                
-                # Update status table
-                status_table.add_row(
-                    f"[bold]{run.status}[/bold]",
-                    f"{elapsed:.1f}s",
-                    str(step_count),
-                    self._get_run_details(run)
-                )
-                
-                live.update(status_table)
-                
-                # Handle special states
-                if run.status == "requires_action":
-                    await self._handle_tool_execution(thread_id, run.id, run)
-                elif run.status in ["completed", "failed", "cancelled", "expired"]:
-                    break
-                
-                await asyncio.sleep(1)
-        
-        # Update conversation history with assistant response
+        # Get response
         if run.status == "completed":
-            await self._update_history_with_response(thread_id, run.id)
-        
-        console.print(f"✅ Run completed: [bold green]{run.status}[/bold green]")
-        
-        return {
-            "run_id": run.id,
-            "status": run.status,
-            "duration": time.time() - start_time,
-            "step_count": step_count
-        }
+            messages = self.project_client.agents.messages.list(thread_id=thread_id)
+            for msg in messages:
+                if msg.role == "assistant":
+                    response = self._extract_message_content(msg)
+                    console.print(f"🤖 Assistant: {response}")
+                    break
     
-    async def _handle_tool_execution(self, thread_id: str, run_id: str, run) -> None:
-        """Handle tool execution during run"""
-        
-        console.print("🔧 [bold yellow]Handling tool execution...[/bold yellow]")
-        
-        if not hasattr(run, 'required_action') or not run.required_action:
-            console.print("❌ No required action found")
+    def _extract_message_content(self, message):
+        """Extract content from message object"""
+        if hasattr(message, 'content') and message.content:
+            if isinstance(message.content, list) and len(message.content) > 0:
+                if hasattr(message.content[0], 'text'):
+                    return message.content[0].text.value
+            return str(message.content)
+        return "No content"
+    
+    def _show_thread_summary(self):
+        """Display a summary of the current thread"""
+        if not self.thread:
             return
         
-        tool_calls = run.required_action.submit_tool_outputs.tool_calls
-        console.print(f"📋 Processing {len(tool_calls)} tool call(s)")
+        messages = self.project_client.agents.messages.list(thread_id=self.thread.id)
         
-        tool_outputs = []
+        table = Table(title=f"Thread Summary (ID: {self.thread.id[:8]}...)")
+        table.add_column("Turn", style="cyan")
+        table.add_column("Role", style="green")
+        table.add_column("Message Preview", style="white")
         
-        for i, tool_call in enumerate(tool_calls, 1):
-            console.print(f"  {i}. [cyan]{tool_call.function.name}[/cyan]")
-            console.print(f"     Args: [dim]{tool_call.function.arguments}[/dim]")
-            
-            # Simulate tool execution (replace with actual tool logic)
-            try:
-                output = await self._execute_tool(tool_call)
-                tool_outputs.append({
-                    "tool_call_id": tool_call.id,
-                    "output": output
-                })
-                console.print(f"     ✅ [green]Success[/green]: {output[:50]}...")
-                
-            except Exception as e:
-                error_output = f"Error executing tool: {str(e)}"
-                tool_outputs.append({
-                    "tool_call_id": tool_call.id,
-                    "output": error_output
-                })
-                console.print(f"     ❌ [red]Error[/red]: {str(e)}")
+        turn = 1
+        for msg in reversed(list(messages)):  # Show in chronological order
+            content = self._extract_message_content(msg)
+            preview = content[:50] + "..." if len(content) > 50 else content
+            table.add_row(str(turn), msg.role.capitalize(), preview)
+            turn += 1
         
-        # Submit tool outputs
-        if tool_outputs:
-            self.client.agents.runs.submit_tool_outputs(
-                thread_id=thread_id,
-                run_id=run_id,
-                tool_outputs=tool_outputs
-            )
-            console.print("📤 Submitted tool outputs")
+        console.print("\n")
+        console.print(table)
     
-    async def _execute_tool(self, tool_call) -> str:
-        """Execute individual tool call"""
+    def _show_thread_history(self, thread_id):
+        """Display full conversation history for a thread"""
+        console.print(f"\n📜 [bold]Full Thread History[/bold]")
+        console.print(f"Thread ID: {thread_id}\n")
         
-        function_name = tool_call.function.name
-        arguments = json.loads(tool_call.function.arguments) if tool_call.function.arguments else {}
+        messages = self.project_client.agents.messages.list(thread_id=thread_id)
         
-        # Example tool implementations
-        if function_name == "get_current_time":
-            return time.strftime("%Y-%m-%d %H:%M:%S UTC")
-        
-        elif function_name == "calculate":
-            expression = arguments.get("expression", "")
-            try:
-                # Simple calculator (use safely in production)
-                result = eval(expression.replace("^", "**"))
-                return f"Result: {result}"
-            except:
-                return "Error: Invalid expression"
-        
-        elif function_name == "search_web":
-            query = arguments.get("query", "")
-            return f"Search results for '{query}': [Simulated search results]"
-        
-        else:
-            return f"Tool '{function_name}' executed successfully"
+        for msg in reversed(list(messages)):
+            role_emoji = "👤" if msg.role == "user" else "🤖"
+            content = self._extract_message_content(msg)
+            console.print(f"{role_emoji} [bold]{msg.role.capitalize()}:[/bold] {content}")
+            console.print()
     
-    async def _update_history_with_response(self, thread_id: str, run_id: str) -> None:
-        """Update history with assistant's response"""
-        
-        # Get latest messages
-        messages = self.client.agents.messages.list(thread_id=thread_id)
-        
-        # Find new assistant messages not in history
-        for message in messages:
-            if message.role == "assistant":
-                if not any(h.get("message_id") == message.id for h in self.conversation_history):
-                    content = message.content[0].text.value if message.content else ""
-                    
-                    self.conversation_history.append({
-                        "role": "assistant",
-                        "content": content,
-                        "timestamp": time.time(),
-                        "message_id": message.id,
-                        "thread_id": thread_id,
-                        "run_id": run_id
-                    })
-    
-    def _get_run_details(self, run) -> str:
-        """Get run details for display"""
-        details = []
-        
-        if hasattr(run, 'last_error') and run.last_error:
-            details.append(f"Error: {run.last_error.message}")
-        
-        if hasattr(run, 'required_action') and run.required_action:
-            action_type = type(run.required_action).__name__
-            details.append(f"Action: {action_type}")
-        
-        return " | ".join(details) if details else "Processing..."
-    
-    def display_conversation_history(self, thread_id: str = None) -> None:
-        """Display formatted conversation history"""
-        
-        # Filter by thread if specified
-        messages = self.conversation_history
-        if thread_id:
-            messages = [m for m in messages if m.get("thread_id") == thread_id]
-        
-        if not messages:
-            console.print("📭 No conversation history found")
-            return
-        
-        console.print(Panel.fit(
-            f"💬 Conversation History ({len(messages)} messages)",
-            style="bold blue"
-        ))
-        
-        for i, msg in enumerate(messages, 1):
-            role_color = "green" if msg["role"] == "assistant" else "cyan"
-            timestamp = time.strftime("%H:%M:%S", time.localtime(msg["timestamp"]))
-            
-            content = msg["content"]
-            if len(content) > 100:
-                content = content[:97] + "..."
-            
-            console.print(f"[dim]{i:2d}.[/dim] [{role_color}]{msg['role'].title()}[/{role_color}] "
-                         f"[dim]({timestamp})[/dim]: {content}")
-            
-            if i < len(messages):
-                console.print()
-    
-    def export_conversation(self, filename: str, thread_id: str = None) -> None:
-        """Export conversation to JSON file"""
-        
-        messages = self.conversation_history
-        if thread_id:
-            messages = [m for m in messages if m.get("thread_id") == thread_id]
-        
-        export_data = {
-            "exported_at": time.time(),
-            "thread_id": thread_id,
-            "message_count": len(messages),
-            "messages": messages,
-            "thread_stats": self.active_threads
-        }
-        
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(export_data, f, indent=2, ensure_ascii=False)
-        
-        console.print(f"💾 Exported {len(messages)} messages to {filename}")
+    def cleanup(self):
+        """Clean up resources"""
+        if self.agent:
+            self.project_client.agents.delete(self.agent.id)
+            console.print(f"🗑️ Deleted agent: {self.agent.id}")
 
-async def get_or_create_agent(project_client: AIProjectClient, agent_name: str):
-    """Gets an agent by name or creates it if it doesn't exist."""
-    
-    # List all agents in the project
-    agents_list = project_client.agents.list_agents()
-    
-    # Check if an agent with the given name already exists
-    for agent in agents_list:
-        if agent.name == agent_name:
-            console.print(f"🤖 Found existing agent: [bold]'{agent.name}'[/bold] (ID: {agent.id})")
-            return agent
-            
-    # If no agent is found, create a new one
-    console.print(f"🤔 Agent '{agent_name}' not found, creating a new one...")
-    return await create_test_agent_with_tools(project_client, agent_name)
 
-async def create_test_agent_with_tools(project_client: AIProjectClient, agent_name: str):
-    """Create a test agent with basic tools for demonstration"""
-    
-    # Define simple tools for testing
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "get_current_time",
-                "description": "Get the current date and time",
-                "parameters": {
-                    "type": "object",
-                    "properties": {}
-                }
-            }
-        },
-        {
-            "type": "function", 
-            "function": {
-                "name": "calculate",
-                "description": "Perform mathematical calculations",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "expression": {
-                            "type": "string",
-                            "description": "Mathematical expression to evaluate"
-                        }
-                    },
-                    "required": ["expression"]
-                }
-            }
-        }
-    ]
-    
-    agent = project_client.agents.create_agent(
-        name=agent_name,
-        model=os.getenv('MODEL_DEPLOYMENT_NAME'),
-        instructions="""
-        You are a helpful assistant with access to tools for time and calculations.
-        
-        When users ask for the time, use the get_current_time tool.
-        When users ask for calculations, use the calculate tool.
-        
-        Always be friendly and explain what you're doing when using tools.
-        """,
-        tools=tools
-    )
-    
-    console.print(f"🤖 Created agent with tools: {agent.id}")
-    return agent
-
-async def demo_conversation_scenarios(manager: ConversationManager, agent_id: str):
-    """Demonstrate various conversation scenarios"""
-    
-    scenarios = [
-        {
-            "name": "Basic Q&A",
-            "messages": [
-                "Hello! Can you introduce yourself?",
-                "What can you help me with?"
-            ]
-        },
-        {
-            "name": "Tool Usage",
-            "messages": [
-                "What time is it right now?",
-                "Can you calculate 25 * 47 + 18?",
-                "What's the square root of 144?"
-            ]
-        },
-        {
-            "name": "Context Retention",
-            "messages": [
-                "My name is Alice and I work as a data scientist.",
-                "I'm working on a machine learning project with Python.",
-                "Can you remember what I told you about myself?",
-                "What programming language did I mention?"
-            ]
-        }
-    ]
-    
-    for scenario in scenarios:
-        console.print(Panel.fit(
-            f"🎭 Scenario: {scenario['name']}",
-            style="bold magenta"
-        ))
-        
-        # Create new thread for this scenario
-        thread_id = manager.create_conversation(scenario['name'])
-        
-        for message in scenario['messages']:
-            console.print(f"\n👤 [cyan]User:[/cyan] {message}")
-            
-            # Add user message
-            manager.add_message(thread_id, message)
-            
-            # Execute agent run
-            run_result = await manager.execute_run_with_monitoring(thread_id, agent_id)
-            
-            # Brief pause between messages
-            await asyncio.sleep(1)
-        
-        # Show conversation for this scenario
-        console.print(f"\n📝 [bold]Conversation Summary for {scenario['name']}:[/bold]")
-        manager.display_conversation_history(thread_id)
-        
-        # Export this conversation
-        export_filename = f"conversation_{scenario['name'].lower().replace(' ', '_')}.json"
-        manager.export_conversation(export_filename, thread_id)
-        
-        console.print("\n" + "="*60 + "\n")
-
-async def main():
-    """Main demonstration function"""
-    
+def main():
+    """Run the conversation history demonstrations"""
     console.print(Panel.fit(
-        "🚀 Azure AI Foundry Advanced Conversation Demo",
+        "🎓 [bold]Exercise 3: Threads and Conversation History[/bold]\n"
+        "Learn how Azure AI Agents maintain context and memory",
         style="bold blue"
     ))
     
-    load_dotenv()
-    
-    # Initialize client
-    project_client = AIProjectClient(
-        endpoint=os.getenv('PROJECT_ENDPOINT'),
-        credential=DefaultAzureCredential()
-    )
-    
-    # Create conversation manager
-    manager = ConversationManager(project_client)
+    demo = ConversationDemo()
     
     try:
-        # Get or create the test agent
-        agent = await get_or_create_agent(project_client, "conversation-demo-agent")
+        # Create the agent once
+        demo.create_agent()
         
-        # Run demonstration scenarios
-        await demo_conversation_scenarios(manager, agent.id)
+        # Demo 1: Single thread with conversation history
+        demo.demonstrate_single_thread_conversation()
+        input("\n➡️  Press Enter to continue to Demo 2...")
         
-        # Show overall statistics
-        console.print(Panel.fit(
-            "📊 Session Statistics",
+        # Demo 2: Multiple threads showing isolation
+        demo.demonstrate_multiple_threads_isolation()
+        input("\n➡️  Press Enter to continue to Demo 3...")
+        
+        # Demo 3: Thread persistence
+        demo.demonstrate_thread_persistence()
+        
+        # Learning summary
+        console.print(Panel(
+            "🎯 [bold]Key Takeaways:[/bold]\n\n"
+            "1. 🧵 **Threads** = Conversation sessions that maintain history\n"
+            "2. 💬 **Messages** = Individual interactions stored in threads\n"
+            "3. 🏃 **Runs** = Executions that process messages and generate responses\n"
+            "4. 🔒 **Isolation** = Each thread has its own separate context\n"
+            "5. 💾 **Persistence** = Threads can be resumed using their IDs\n\n"
+            "💡 **Best Practice**: Use one thread per conversation session!",
+            title="✅ Learning Summary",
             style="bold green"
         ))
         
-        stats_table = Table()
-        stats_table.add_column("Metric", style="cyan")
-        stats_table.add_column("Value", style="green")
-        
-        stats_table.add_row("Total Messages", str(len(manager.conversation_history)))
-        stats_table.add_row("Active Threads", str(len(manager.active_threads)))
-        stats_table.add_row("User Messages", str(len([m for m in manager.conversation_history if m["role"] == "user"])))
-        stats_table.add_row("Assistant Messages", str(len([m for m in manager.conversation_history if m["role"] == "assistant"])))
-        
-        console.print(stats_table)
-        
-        # Export full session
-        manager.export_conversation("full_session_export.json")
-        
     except Exception as e:
-        console.print(f"❌ [bold red]Error:[/bold red] {e}")
-        
-    # The finally block with cleanup is commented out to allow agent persistence
-    # finally:
-    #     # Cleanup
-    #     try:
-    #         project_client.agents.delete(name=agent.name)
-    #         console.print("🧹 Cleaned up test agent")
-    #     except:
-    #         pass
+        console.print(f"❌ Error: {e}")
+    finally:
+        # demo.cleanup()  # Commented out to allow inspection
+        console.print("\n💡 Agent kept alive for inspection. Clean up manually if needed.")
+
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        console.print("\n👋 Demo interrupted by user")
-    except Exception as e:
-        console.print(f"\n💥 [bold red]Unexpected error:[/bold red] {e}")
+    main()
