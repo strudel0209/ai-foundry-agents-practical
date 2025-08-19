@@ -31,9 +31,41 @@ class ConversationDemo:
         self.agent = None
         self.thread = None
     
+    def find_existing_agent(self, agent_name):
+        """Check if an agent with the given name already exists"""
+        try:
+            console.print(f"🔍 Checking for existing agent '{agent_name}'...")
+            
+            # Use the documented API: list_agents(...) on the Agents client.
+            agents = self.project_client.agents.list_agents(limit=100)
+            
+            # Search for agent by name
+            for agent in agents:
+                if agent.name == agent_name:
+                    console.print(f"✅ Found existing agent: {agent.name} (ID: {agent.id})")
+                    return agent
+            
+            console.print(f"ℹ️ No existing agent found with name '{agent_name}'")
+            return None
+            
+        except Exception as e:
+            console.print(f"⚠️ Error checking for existing agents: {e}")
+            return None
+    
     def create_agent(self):
         """Create an agent optimized for demonstrating conversation memory"""
-        instructions = """
+        # kept for backwards compatibility — delegate to get_or_create_agent
+        return self.get_or_create_agent()
+    
+    def get_or_create_agent(self, agent_name: str = "conversation-memory-demo", instructions: str | None = None):
+        """
+        Find an existing agent by name and return it, otherwise create a new one.
+        This follows the simple, documented pattern: call agents.list() to search,
+        then agents.create_agent(...) to create when missing.
+        """
+        # allow callers to pass custom instructions, but default to the demo instructions
+        if instructions is None:
+            instructions = """
         You are a helpful AI assistant that demonstrates conversation memory.
         Key behaviors:
         - Remember all previous messages in our conversation
@@ -44,14 +76,26 @@ class ConversationDemo:
         When asked about conversation history, provide specific examples
         of what you remember from our chat.
         """
-        
-        self.agent = self.project_client.agents.create_agent(
-            model=os.environ["MODEL_DEPLOYMENT_NAME"],
-            name="conversation-memory-demo",
-            instructions=instructions
-        )
-        console.print(f"✅ Created agent: {self.agent.name}")
-        return self.agent
+        # First check if agent already exists
+        existing_agent = self.find_existing_agent(agent_name)
+        if existing_agent:
+            self.agent = existing_agent
+            console.print(f"♻️ Reusing existing agent: {self.agent.name} (ID: {self.agent.id})")
+            return self.agent
+
+        # Create new agent if it doesn't exist
+        console.print(f"🎭 Creating new agent '{agent_name}'...")
+        try:
+            self.agent = self.project_client.agents.create_agent(
+                model=os.environ["MODEL_DEPLOYMENT_NAME"],
+                name=agent_name,
+                instructions=instructions
+            )
+            console.print(f"✅ Created new agent: {self.agent.name} (ID: {self.agent.id})")
+            return self.agent
+        except Exception as e:
+            console.print(f"❌ Error creating agent: {e}")
+            raise
     
     def demonstrate_single_thread_conversation(self):
         """Show how a single thread maintains conversation history"""
@@ -258,8 +302,13 @@ class ConversationDemo:
     def cleanup(self):
         """Clean up resources"""
         if self.agent:
-            self.project_client.agents.delete(self.agent.id)
-            console.print(f"🗑️ Deleted agent: {self.agent.id}")
+            console.print(f"\n🧹 Cleaning up agent: {self.agent.name} (ID: {self.agent.id})")
+            try:
+                self.project_client.agents.delete(self.agent.id)
+                console.print(f"🗑️ Deleted agent: {self.agent.id}")
+            except Exception as e:
+                console.print(f"⚠️ Error deleting agent: {e}")
+                console.print("You may need to manually delete it from the Azure AI Foundry portal")
 
 
 def main():
@@ -273,7 +322,7 @@ def main():
     demo = ConversationDemo()
     
     try:
-        # Create the agent once
+        # Create the agent once (or reuse existing)
         demo.create_agent()
         
         # Demo 1: Single thread with conversation history
@@ -303,8 +352,17 @@ def main():
     except Exception as e:
         console.print(f"❌ Error: {e}")
     finally:
-        # demo.cleanup()  # Commented out to allow inspection
-        console.print("\n💡 Agent kept alive for inspection. Clean up manually if needed.")
+        # Ask user if they want to keep the agent for inspection
+        console.print("\n" + "=" * 50)
+        keep_agent = input("💭 Keep agent for inspection? (y/N): ").strip().lower()
+        
+        if keep_agent != 'y':
+            demo.cleanup()
+        else:
+            console.print("\n💡 Agent kept alive for inspection. Remember to clean up manually!")
+            if demo.agent:
+                console.print(f"   Agent ID: {demo.agent.id}")
+                console.print(f"   Agent Name: {demo.agent.name}")
 
 
 if __name__ == "__main__":
