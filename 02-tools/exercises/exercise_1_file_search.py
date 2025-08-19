@@ -19,6 +19,7 @@ class DocumentProcessor:
         self.vector_store = None
         self.agent = None
         self.uploaded_files = []  # Track uploaded files for cleanup
+        self.thread = None  # persistent thread to reuse across queries
 
     def create_sample_documents(self):
         """Create sample documents for testing"""
@@ -131,7 +132,7 @@ CONTACTS
 
         uploaded_files = []
         for file_path in file_paths:
-            # Upload file using the correct SDK method
+            # Upload file 
             file_obj = self.client.agents.files.upload_and_poll(
                 file_path=str(file_path),
                 purpose=FilePurpose.AGENTS
@@ -146,10 +147,11 @@ CONTACTS
         print("Checking for existing vector stores with the same files...")
         try:
             for vs in self.client.agents.vector_stores.list():
-                # Get file IDs for this vector store
+                # Get file IDs for this vector store using the correct method
                 vs_file_ids = set()
                 try:
-                    for f in self.client.agents.files.list(vector_store_id=vs.id):
+                    # Use vector_store_files operations directly from agents client
+                    for f in self.client.agents.vector_store_files.list(vector_store_id=vs.id):
                         vs_file_ids.add(f.id)
                 except Exception as e:
                     print(f"Could not list files for vector store {vs.id}: {e}")
@@ -162,7 +164,7 @@ CONTACTS
         except Exception as e:
             print(f"Error listing vector stores: {e}")
 
-        # Create vector store using the correct SDK method
+        # Create vector store
         self.vector_store = self.client.agents.vector_stores.create_and_poll(
             file_ids=[f.id for f in uploaded_files],
             name="document-intelligence-store"
@@ -216,14 +218,25 @@ When answering questions:
             tool_resources=file_search_tool.resources
         )
         
+        # Create a single persistent thread for this agent so all queries share context
+        if self.thread is None:
+            try:
+                self.thread = self.client.agents.threads.create()
+                print(f"Created persistent thread: {self.thread.id}")
+            except Exception as e:
+                print(f"Warning: could not create persistent thread: {e}")
+        
         print(f"Using search agent: {self.agent.id}")
         return self.agent
 
     def search_documents(self, query):
         """Search documents using the agent"""
-        # Create thread for this search
-        thread = self.client.agents.threads.create()
-        
+        # Reuse the persistent thread (create lazily if missing)
+        if self.thread is None:
+            self.thread = self.client.agents.threads.create()
+            print(f"Created thread for searches: {self.thread.id}")
+        thread = self.thread
+
         # Send query
         self.client.agents.messages.create(
             thread_id=thread.id,
@@ -240,7 +253,26 @@ When answering questions:
         try:
             if run.status == "completed":
                 messages = list(self.client.agents.messages.list(thread_id=thread.id))
-                response = messages[0].content[0].text.value
+                # Prefer the latest assistant message; fall back to last message
+                assistant_msg = None
+                for m in reversed(messages):
+                    if getattr(m, "role", None) == "assistant":
+                        assistant_msg = m
+                        break
+                if assistant_msg is None and messages:
+                    assistant_msg = messages[-1]
+
+                # Extract text safely from the content block(s)
+                response = ""
+                try:
+                    if hasattr(assistant_msg, "content") and assistant_msg.content:
+                        # attempt common structure: content[0].text.value
+                        block = assistant_msg.content[0]
+                        response = getattr(getattr(block, "text", None), "value", str(block))
+                    else:
+                        response = str(assistant_msg)
+                except Exception:
+                    response = str(assistant_msg)
                 
                 # Extract citations if present
                 citations = []
