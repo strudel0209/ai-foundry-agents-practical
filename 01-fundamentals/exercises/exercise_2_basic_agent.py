@@ -109,7 +109,7 @@ def test_agent_conversation(agent, project_client):
     
     try:
         # Create a conversation thread
-        thread = project_client.agents.create_thread()
+        thread = project_client.agents.threads.create()
         console.print(f"📞 Created conversation thread: [dim]{thread.id}[/dim]")
         
         # Test questions to ask the agent
@@ -123,7 +123,7 @@ def test_agent_conversation(agent, project_client):
             console.print(f"\n🔄 [bold]Test Question {i}/{len(test_questions)}[/bold]")
             
             # Send user message
-            message = project_client.agents.create_message(
+            message = project_client.agents.messages.create(
                 thread_id=thread.id,
                 role="user",
                 content=question
@@ -132,7 +132,7 @@ def test_agent_conversation(agent, project_client):
             console.print(f"👤 [bold blue]User:[/bold blue] {question}")
             
             # Start agent run
-            run = project_client.agents.create_run(
+            run = project_client.agents.runs.create(
                 thread_id=thread.id,
                 agent_id=agent.id
             )
@@ -147,15 +147,15 @@ def test_agent_conversation(agent, project_client):
                 
                 while run.status in ["queued", "in_progress"]:
                     time.sleep(1)
-                    run = project_client.agents.get_run(thread_id=thread.id, run_id=run.id)
+                    run = project_client.agents.runs.get(thread_id=thread.id, run_id=run.id)
                     progress.update(task, description=f"🤖 Agent status: {run.status}")
             
             # Get and display response
             if run.status == "completed":
-                messages = project_client.agents.list_messages(thread_id=thread.id)
+                messages = project_client.agents.messages.list(thread_id=thread.id)
                 
                 # Find the most recent assistant message
-                for msg in messages.data:
+                for msg in messages:
                     if msg.role == "assistant" and msg.created_at > message.created_at:
                         response = msg.content[0].text.value
                         console.print(f"\n🤖 [bold green]Alex:[/bold green] {response}")
@@ -207,7 +207,8 @@ def cleanup_agent(agent, project_client):
     console.print(f"\n🧹 [bold]Cleaning up agent...[/bold]")
     
     try:
-        project_client.agents.delete_agent(agent.id)
+        # Use delete() instead of delete_agent()
+        project_client.agents.delete(agent.id)
         console.print(f"✅ Agent '{agent.name}' deleted successfully")
     except Exception as e:
         console.print(f"⚠️ Failed to delete agent: {e}")
