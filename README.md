@@ -1,6 +1,6 @@
 # Azure AI Foundry Agents Learning System
 
-A hands-on learning repo for building from basic AI agents to Agents geared with tools and functions in Azure AI Foundry,including native Model Context Protocol (MCP) support and multi-agent orchestration with Semantic Kernel.
+A hands-on learning repo for building from basic AI agents to Agents geared with tools and functions in Azure AI Foundry, including native Model Context Protocol (MCP) support and multi-agent orchestration with Semantic Kernel.
 
 ## 🎯 What You'll Build
 
@@ -82,16 +82,20 @@ Unlock the full potential of agent tools.
 - `exercise_3_function_calling.py` - Business logic integration
 
 ### [Module 3: Advanced Orchestration](03-orchestration/README.md)
-Build sophisticated multi-agent systems.
+Build multi-agent workflows with Semantic Kernel.
 
 **What you'll learn:**
-- Semantic Kernel integration for agent coordination
-- Memory management with vector stores (in-memory and Azure AI Search vector store)
-- Intelligent routing and workflow automation
+- Wrap Azure AI Foundry agents as Semantic Kernel agents
+- Sequential, round-robin, and hybrid orchestration patterns
+- Asynchronous invocation and result aggregation
+- Tracing with OpenTelemetry + Application Insights
 
 **Key exercises:**
 - `exercise_2_semantic_kernel.py` - SK integration basics
-- `exercise_3_advanced_orchestration.py` - Multi-agent workflows with memory
+
+### [Module 3a: Connected Agents](03-orchestration-connected-agents/01-connected-agents.md)
+Native multi-agent orchestration via ConnectedAgentTool (primary agent invokes specialist agents as tools).
+- `exercise_1_connected_agents.py` triage example (priority, team, effort tools).
 
 ### [Module 4: MCP Integration](04-mcp/README.md)
 Connect agents to external systems using Model Context Protocol.
@@ -108,6 +112,13 @@ Connect agents to external systems using Model Context Protocol.
 - `setup_sqlite_mcp_server.py` - Production-ready MCP server
 - `deploy-mcp-to-container-apps.sh` - Azure deployment automation
 
+### [Module 5: Agent Framework Integration](05-agent-framework/README.md)
+Higher-level abstractions using `agent_framework`:
+- `ChatAgent` for simplified multi-turn chat (`agent.run()`).
+- `AzureAIAgentClient` handles agent reuse, version selection, cleanup flags.
+- Env keys: `AZURE_AI_PROJECT_ENDPOINT|PROJECT_ENDPOINT`, `AZURE_AI_MODEL_DEPLOYMENT_NAME|MODEL_DEPLOYMENT_NAME`, `AZURE_AI_AGENT_ID|AGENT_ID`, `AZURE_AI_AGENT_NAME`.
+- Example: `01-fundamentals/exercises/exercise_2_basic_agent.py`.
+
 ## 🏗️ Repository Structure
 
 ```
@@ -115,14 +126,14 @@ ai-agents-system/
 ├── 01-fundamentals/          # Agent basics and setup
 ├── 02-tools/                 # File search, code interpreter, functions
 ├── 03-orchestration/         # Multi-agent systems with SK
+├── 03-orchestration-connected-agents/ # Connected agents module
 ├── 04-mcp/                   # Model Context Protocol integration
-│   ├── exercises/            # Hands-on MCP exercises
-│   └── scripts/              # MCP server implementation & deployment
+├── 05-agent-framework/       # Agent framework integration
 ├── data/                     # docs and images
 └── .devcontainer/           # VS Code dev container setup
 ```
 
-## 🔥 Key Features (July 2025)
+## 🔥 Key Features
 
 ### Native MCP Support in Azure AI Foundry
 As of July 2025, Azure AI Foundry Agent Service includes native MCP support:
@@ -148,20 +159,23 @@ tool_resources={
 ```
 
 ### Multi-Agent Orchestration with Semantic Kernel
-Advanced coordination patterns with memory management:
 
+Current implemented patterns:
 ```python
-# Intelligent routing with memory-aware context
-orchestrator = MultiAgentOrchestrator(
-    vector_store_type="azure_ai_search",
-    embedding_deployment=EMBEDDING_MODEL
-)
+# Sequential example (research → analysis → writing)
+await orchestrator.demonstrate_sequential_orchestration(topic="AI in Healthcare")
 
-# Collaborative workflows
-result = await orchestrator.process_request(
-    "Analyze Q3 financial performance and compliance"
-)
+# Round-robin panel discussion
+await orchestrator.demonstrate_roundrobin_orchestration(topic="Quantum Computing impact")
+
+# Hybrid (phase-chained)
+await orchestrator.demonstrate_hybrid_orchestration(goal="Sustainable energy future")
 ```
+
+Tracing features:
+- Manual spans (`agent_response`, `sequential_orchestration`, etc.)
+- Automatic Azure SDK spans
+- Application Insights export via connection string/environment
 
 ### Production-Ready MCP Deployment
 Automated deployment to Azure Container Apps:
@@ -175,13 +189,46 @@ Automated deployment to Azure Container Apps:
 # Auto-scaling capabilities
 ```
 
+## 🧪 Observability & Telemetry
+
+Integrated in `03-orchestration/exercises/exercise_2_semantic_kernel.py`:
+- OpenTelemetry configured with `configure_azure_monitor`
+- Custom span attributes: agent ids, run status, timeouts
+- Logging instrumentation includes trace/span IDs
+- View traces: Azure AI Foundry Project → Observability → Tracing or Application Insights Transaction Search
+
+Environment variables:
+```env
+OTEL_SERVICE_NAME=semantic-kernel-agents
+AZURE_TRACING_GEN_AI_CONTENT_RECORDING_ENABLED=true
+APPLICATIONINSIGHTS_CONNECTION_STRING=<optional if not auto-resolved>
+```
+
+Minimal usage pattern:
+```python
+from opentelemetry import trace
+tracer = trace.get_tracer(__name__)
+
+@tracer.start_as_current_span("agent_response")
+async def get_response(...):
+    span = trace.get_current_span()
+    span.set_attribute("run.status", run.status)
+```
+
+## 🔧 Client Architecture Notes
+
+- AIProjectClient: persisted agents, project metadata.
+- AgentsClient: runtime (threads, runs, messages, files, vector stores).
+- AzureAIAgentClient (agent_framework): wraps both for convenience; prefer in quick chat scenarios.
+- ChatAgent: maintains turn context; use `async with ChatAgent` for proper lifecycle.
+
 ## 💡 Best Practices
 
 ### Development Workflow
-1. Start with local development using the devcontainer
-2. Test MCP servers locally before cloud deployment
-3. Use in-memory vector stores for development, Azure AI Search for production
-4. Implement comprehensive error handling and logging
+1. Use dev container for preinstalled Azure CLI, Node, Python.
+2. Reuse agents (check existing before create).
+3. Separate persisted vs runtime usage (AIProjectClient vs AgentsClient).
+4. Keep threads for contextual continuity only when needed.
 
 ### Security Considerations
 - Use Azure Managed Identity for authentication
@@ -190,10 +237,17 @@ Automated deployment to Azure Container Apps:
 - Use approval workflows for sensitive operations
 
 ### Performance Optimization
-- Cache frequently accessed data in vector stores
-- Use async patterns for parallel agent execution
-- Implement connection pooling for database access
-- Monitor token usage and optimize prompts
+- Async patterns for multi-agent calls.
+- Avoid premature memory/vector store claims (only file search vector stores implemented).
+
+### Environment Variables
+Support dual naming (agent_framework & raw SDK):
+```
+PROJECT_ENDPOINT | AZURE_AI_PROJECT_ENDPOINT
+MODEL_DEPLOYMENT_NAME | AZURE_AI_MODEL_DEPLOYMENT_NAME
+AGENT_ID | AZURE_AI_AGENT_ID
+AZURE_AI_AGENT_NAME (optional)
+```
 
 ## 🧪 Testing & Validation
 
