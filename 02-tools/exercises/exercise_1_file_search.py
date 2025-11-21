@@ -5,19 +5,27 @@ from pathlib import Path
 from dotenv import load_dotenv
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
+from azure.ai.agents import AgentsClient                # <-- NEW
 from azure.ai.agents.models import FileSearchTool, FilePurpose
+import textwrap
 
 
 class DocumentProcessor:
     def __init__(self):
         load_dotenv()
-        self.client = AIProjectClient(
-            endpoint=os.getenv('PROJECT_ENDPOINT'),
+        self.project_client = AIProjectClient(
+            endpoint=os.getenv("PROJECT_ENDPOINT"),
             credential=DefaultAzureCredential(),
-            api_version="2025-05-15-preview"
+            api_version="2025-05-15-preview",
         )
+        self.agents_client = AgentsClient(
+            endpoint=os.getenv("PROJECT_ENDPOINT"),
+            credential=DefaultAzureCredential(),
+        )
+
         self.vector_store = None
-        self.agent = None
+        self.persisted_agent = None   # persisted in Foundry (AIProjectClient)
+        self.agent = None             # runtime assistant (AgentsClient)
         self.uploaded_files = []  # Track uploaded files for cleanup
         self.thread = None  # persistent thread to reuse across queries
 
@@ -132,8 +140,8 @@ CONTACTS
 
         uploaded_files = []
         for file_path in file_paths:
-            # Upload file 
-            file_obj = self.client.agents.files.upload_and_poll(
+            # Upload file using AgentsClient (files API lives on AgentsClient)
+            file_obj = self.agents_client.files.upload_and_poll(
                 file_path=str(file_path),
                 purpose=FilePurpose.AGENTS
             )
@@ -146,12 +154,12 @@ CONTACTS
         # Check for existing vector store with the same files
         print("Checking for existing vector stores with the same files...")
         try:
-            for vs in self.client.agents.vector_stores.list():
+            for vs in self.agents_client.vector_stores.list():
                 # Get file IDs for this vector store using the correct method
                 vs_file_ids = set()
                 try:
                     # Use vector_store_files operations directly from agents client
-                    for f in self.client.agents.vector_store_files.list(vector_store_id=vs.id):
+                    for f in self.agents_client.vector_store_files.list(vector_store_id=vs.id):
                         vs_file_ids.add(f.id)
                 except Exception as e:
                     print(f"Could not list files for vector store {vs.id}: {e}")
@@ -164,8 +172,8 @@ CONTACTS
         except Exception as e:
             print(f"Error listing vector stores: {e}")
 
-        # Create vector store
-        self.vector_store = self.client.agents.vector_stores.create_and_poll(
+        # Create vector store using AgentsClient
+        self.vector_store = self.agents_client.vector_stores.create_and_poll(
             file_ids=[f.id for f in uploaded_files],
             name="document-intelligence-store"
         )
@@ -176,44 +184,59 @@ CONTACTS
     def get_or_create_agent(self, name, model, instructions, tools, tool_resources):
         """Get existing agent or create new one"""
         try:
-            agents = self.client.agents.list_agents()
-            for agent in agents:
-                if agent.name == name:
-                    print(f"Found existing agent: {agent.id}")
-                    return agent
+            for pa in self.project_client.agents.list(limit=100):
+                if pa.name == name:
+                    self.persisted_agent = pa
+                    print(f"Found persisted agent in Foundry: {pa.id}")
+                    break
+            if not self.persisted_agent:
+                self.persisted_agent = self.project_client.agents.create_version(
+                    agent_name=name,
+                    definition=PromptAgentDefinition(model=model, instructions=instructions),
+                )
+                print(f"Created persisted agent: {self.persisted_agent.id}")
         except Exception as e:
-            print(f"Error listing agents: {e}")
-        
-        # Create new agent if none found
-        agent = self.client.agents.create_agent(
-            model=model,
-            name=name,
-            instructions=instructions,
-            tools=tools,
-            tool_resources=tool_resources
-        )
-        print(f"Created new agent: {agent.id}")
-        return agent
-    
+            print(f"Warning checking/creating persisted agents: {e}")
+
+        try:
+            for runtime in self.agents_client.list_agents(limit=100):
+                if getattr(runtime, "name", None) == name:
+                    self.agent = runtime
+                    print(f"Found runtime assistant: {runtime.id}")
+                    break
+        except Exception as e:
+            print(f"Warning listing runtime assistants: {e}")
+
+        if not self.agent:
+            self.agent = self.agents_client.create_agent(
+                model=model,
+                name=name,
+                instructions=instructions,
+                tools=tools,
+                tool_resources=tool_resources,
+            )
+            print(f"Created runtime assistant: {self.agent.id}")
+        return self.agent
+
     def create_search_agent(self):
         """Create agent with file search capability"""
         file_search_tool = FileSearchTool(
             vector_store_ids=[self.vector_store.id]
         )
         
+        # Ensure runtime agent (used for threads/runs/messages) — also optionally persisted
         self.agent = self.get_or_create_agent(
             name="document-search-agent",
             model=os.getenv('MODEL_DEPLOYMENT_NAME'),
-            instructions="""
-You are a document intelligence assistant. You help users find and analyze information from uploaded documents.
-
-When answering questions:
-1. Search through the available documents
-2. Provide specific quotes and references
-3. Cite the source document
-4. Offer additional context when helpful
-5. If information isn't found, say so clearly
-""",
+            instructions=textwrap.dedent("""
+                You are a document intelligence assistant. You help users find and analyze information from uploaded documents.
+                When answering questions:
+                1. Search through the available documents
+                2. Provide specific quotes and references
+                3. Cite the source document
+                4. Offer additional context when helpful
+                5. If information isn't found, say so clearly
+            """).strip(),
             tools=file_search_tool.definitions,
             tool_resources=file_search_tool.resources
         )
@@ -221,7 +244,7 @@ When answering questions:
         # Create a single persistent thread for this agent so all queries share context
         if self.thread is None:
             try:
-                self.thread = self.client.agents.threads.create()
+                self.thread = self.agents_client.threads.create()
                 print(f"Created persistent thread: {self.thread.id}")
             except Exception as e:
                 print(f"Warning: could not create persistent thread: {e}")
@@ -231,73 +254,56 @@ When answering questions:
 
     def search_documents(self, query):
         """Search documents using the agent"""
-        # Reuse the persistent thread (create lazily if missing)
         if self.thread is None:
-            self.thread = self.client.agents.threads.create()
+            self.thread = self.agents_client.threads.create()
             print(f"Created thread for searches: {self.thread.id}")
         thread = self.thread
 
-        # Send query
-        self.client.agents.messages.create(
+        self.agents_client.messages.create(
             thread_id=thread.id,
             role="user",
-            content=query
+            content=query,
         )
-        
-        # Process with agent
-        run = self.client.agents.runs.create_and_process(
+
+        run = self.agents_client.runs.create_and_process(
             thread_id=thread.id,
-            agent_id=self.agent.id
+            agent_id=self.agent.id,
         )
-        
+
         try:
             if run.status == "completed":
-                messages = list(self.client.agents.messages.list(thread_id=thread.id))
-                # Prefer the latest assistant message; fall back to last message
+                messages = list(self.agents_client.messages.list(thread_id=thread.id))
+
                 assistant_msg = None
-                for m in reversed(messages):
-                    if getattr(m, "role", None) == "assistant":
-                        assistant_msg = m
+                for message in reversed(messages):
+                    if getattr(message, "role", None) == "assistant":
+                        assistant_msg = message
                         break
                 if assistant_msg is None and messages:
                     assistant_msg = messages[-1]
 
-                # Extract text safely from the content block(s)
                 response = ""
-                try:
-                    if hasattr(assistant_msg, "content") and assistant_msg.content:
-                        # attempt common structure: content[0].text.value
-                        block = assistant_msg.content[0]
-                        response = getattr(getattr(block, "text", None), "value", str(block))
-                    else:
+                if assistant_msg:
+                    try:
+                        if getattr(assistant_msg, "content", None):
+                            block = assistant_msg.content[0]
+                            response = getattr(getattr(block, "text", None), "value", str(block))
+                        else:
+                            response = str(assistant_msg)
+                    except Exception:
                         response = str(assistant_msg)
-                except Exception:
-                    response = str(assistant_msg)
-                
-                # Extract citations if present
+
                 citations = []
-                if hasattr(messages[0].content[0], 'annotations'):
-                    for annotation in messages[0].content[0].annotations:
-                        if hasattr(annotation, 'file_citation'):
+                if messages and getattr(messages[0], "content", None):
+                    first_block = messages[0].content[0]
+                    for annotation in getattr(first_block, "annotations", []) or []:
+                        if hasattr(annotation, "file_citation"):
                             citations.append(annotation.file_citation.file_id)
-                
-                return {
-                    'response': response,
-                    'citations': citations,
-                    'status': 'success'
-                }
-            else:
-                return {
-                    'response': f"Search failed: {run.status}",
-                    'citations': [],
-                    'status': 'error'
-                }
+
+                return {"response": response, "citations": citations, "status": "success"}
+            return {"response": f"Search failed: {run.status}", "citations": [], "status": "error"}
         except Exception as e:
-            return {
-                'response': f"Error during search: {str(e)}",
-                'citations': [],
-                'status': 'error'
-            }
+            return {"response": f"Error during search: {e}", "citations": [], "status": "error"}
         # finally:
         #     # Always cleanup thread
         #     try:
