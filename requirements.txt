@@ -7,6 +7,7 @@ azure-core>=1.30.2
 # Microsoft Agent Framework (matches latest published beta builds)
 agent-framework-core>=1.0.0b251114
 agent-framework-azure-ai>=1.0.0b251114
+agent-framework-mem0
 
 # Azure AI Search for vector storage
 azure-search-documents>=11.6.0b5
@@ -83,3 +84,4 @@ opentelemetry-sdk
 
 # Additional async support for orchestration
 asyncio>=3.4.3
+aiofiles

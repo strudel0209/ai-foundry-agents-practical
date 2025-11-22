@@ -13,47 +13,30 @@ class DataAnalyst:
         self.client = AIProjectClient(
             endpoint=os.getenv('PROJECT_ENDPOINT'),
             credential=DefaultAzureCredential(),
-            # Use newer API version that exposes agent creation and listing helpers
-            api_version="2025-11-15-preview"
+            api_version="2025-05-15-preview"
         )
         self.agent = None
-        # Try to obtain the OpenAI client helper (may be present in azure-ai-projects v2)
-        openai_getter = getattr(self.client, "get_openai_client", None)
-        if openai_getter:
-            try:
-                # This returns an OpenAI client instance from the `openai` package
-                self.openai_client = openai_getter()
-            except Exception:
-                self.openai_client = None
-        else:
-            self.openai_client = None
 
     def create_data_agent(self):
         """Get existing agent or create a new one with code interpreter capabilities."""
         agent_name = "data-analyst-agent"
         model_name = os.getenv('MODEL_DEPLOYMENT_NAME')
         code_tool = CodeInterpreterTool()
-        # Try to find existing agent by name (support multiple method names)
+        # Try to find existing agent by name
         try:
-            list_fn = getattr(self.client.agents, "list_agents", None) or getattr(self.client.agents, "list", None)
-            if list_fn:
-                for agent in list_fn():
-                    if getattr(agent, "name", None) == agent_name:
-                        self.agent = agent
-                        print(f"Using existing data analyst agent: {getattr(self.agent,'id', getattr(self.agent,'name','<unknown>'))}")
-                        return self.agent
-            else:
-                print("Agent listing not available on this client object (continuing to creation).")
+            agents = self.client.agents.list_agents()
+            for agent in agents:
+                if getattr(agent, "name", None) == agent_name:
+                    self.agent = agent
+                    print(f"Using existing data analyst agent: {self.agent.id}")
+                    return self.agent
         except Exception as e:
             print(f"Error listing agents: {e}")
-        # Create new agent if not found — try create_agent, fall back to create_version
-        create_agent_fn = getattr(self.client.agents, "create_agent", None)
-        if create_agent_fn:
-            try:
-                self.agent = create_agent_fn(
-                    model=model_name,
-                    name=agent_name,
-                    instructions="""
+        # Create new agent if not found
+        self.agent = self.client.agents.create_agent(
+            model=model_name,
+            name=agent_name,
+            instructions="""
 You are a data analyst that helps with data processing, analysis, and visualization.
 
 Your capabilities:
@@ -69,74 +52,16 @@ When given data tasks:
 4. Provide actionable insights
 5. Save any charts or outputs as files
 """,
-                    tools=code_tool.definitions,
-                    tool_resources=code_tool.resources
-                )
-                print(f"Created data analyst agent: {getattr(self.agent,'id', getattr(self.agent,'name','<unknown>'))}")
-                return self.agent
-            except Exception as e:
-                print(f"create_agent call failed: {e} (falling back to create_version if available)")
-
-        # Fallback: create_version (prompt-style definition)
-        create_version_fn = getattr(self.client.agents, "create_version", None)
-        if create_version_fn:
-            definition = {
-                "kind": "prompt",
-                "model": model_name,
-                "instructions": """
-You are a data analyst that helps with data processing, analysis, and visualization.
-
-Your capabilities:
-- Analyze datasets and provide insights
-- Create visualizations using matplotlib/seaborn
-- Perform statistical calculations
-- Generate reports with findings
-
-When given data tasks:
-1. Write clean, well-commented Python code
-2. Create meaningful visualizations
-3. Explain your analysis approach
-4. Provide actionable insights
-5. Save any charts or outputs as files
-""",
-                "tools": code_tool.definitions,
-                "tool_resources": code_tool.resources
-            }
-            try:
-                self.agent = create_version_fn(agent_name=agent_name, definition=definition)
-                print(f"Created data analyst agent: {getattr(self.agent,'id', getattr(self.agent,'name','<unknown>'))}")
-                return self.agent
-            except Exception as e:
-                raise RuntimeError(f"Agent creation via create_version failed: {e}")
-
-        # If neither creation method exists, surface clear guidance
-        raise RuntimeError("Agent creation methods not available on client.agents. Upgrade to API 2025-11-15-preview or newer.")
+            tools=code_tool.definitions,
+            tool_resources=code_tool.resources
+        )
+        print(f"Created data analyst agent: {self.agent.id}")
         return self.agent
 
     def analyze_data(self, task_description):
         """Send analysis task to agent and ensure agent is always associated with the run."""
         if not self.agent:
             raise RuntimeError("Agent is not initialized. Call create_data_agent() first.")
-        # Preferred path (azure-ai-projects v2): use the OpenAI client to create a conversation
-        # and invoke the agent via the Responses API using an agent_reference.
-        if getattr(self, "openai_client", None):
-            try:
-                conv = self.openai_client.conversations.create(
-                    items=[{"type": "message", "role": "user", "content": task_description}]
-                )
-                resp = self.openai_client.responses.create(
-                    conversation=conv.id,
-                    extra_body={"agent": {"type": "agent_reference", "name": getattr(self.agent, "name", None)}},
-                    input=""
-                )
-                # Best-effort extraction of text and leave file handling to existing download_file
-                text_response = getattr(resp, "output_text", "") or ""
-                # File handling from code-interpreter outputs can be provider-specific; return empty list here
-                return {"text_response": text_response, "files": []}
-            except Exception as e:
-                # Fall back to older agent run APIs if the OpenAI flow fails
-                print(f"OpenAI client flow failed, falling back to agent runs: {e}")
-        # Fallback: use the agents runs/messages APIs (older clients or missing helper)
         thread = self.client.agents.threads.create()
         self.client.agents.messages.create(
             thread_id=thread.id,
@@ -187,7 +112,7 @@ When given data tasks:
             return {'text_response': f"Analysis failed: {run.status}. {error_msg if error_msg else ''}", 'files': []}
 
     def download_file(self, file_id, filename):
-        """Download generated file using the  Azure AI Foundry SDK method."""
+        """Download generated file using the correct Azure AI Foundry SDK method."""
         try:
             # Method 1: Use the save method (recommended)
             agents_client = self.client.agents
