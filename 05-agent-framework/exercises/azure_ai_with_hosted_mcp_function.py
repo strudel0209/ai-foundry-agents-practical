@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft. All rights reserved.
 
 import asyncio
+import os
 from typing import Any
 
 from agent_framework import AgentProtocol, AgentRunResponse, AgentThread, HostedMCPTool
@@ -41,6 +42,9 @@ async def handle_approvals_with_thread(query: str, agent: "AgentProtocol", threa
 
 async def main() -> None:
     """Example showing Hosted MCP tools for a Azure AI Agent."""
+    # Get the function key from environment variable
+    function_key = os.getenv("AZURE_FUNCTION_KEY", "your-function-key-here")
+    
     async with (
         AzureCliCredential() as credential,
         AzureAIAgentClient(async_credential=credential) as chat_client,
@@ -49,19 +53,20 @@ async def main() -> None:
             name="DocsAgent",
             instructions="You are a helpful assistant that can help with microsoft documentation questions.Please only give the essential instructions",
             tools=HostedMCPTool(    
-                name="Microsoft Learn MCP",
-                url="https://learn.microsoft.com/api/mcp",
-            ),  # Using Hosted MCP Tool for remote MCP servers - Flow: Azure AI Agent (Cloud) <---> MCP Server (Remote)
+                name="Azure Function MCP",
+                url=f"https://func-api-ow2o3p5ev2ijq.azurewebsites.net/mcp?code={function_key}",
+
+            ),  # Using Hosted MCP Tool for remote MCP servers with authentication
         )
         thread = agent.get_new_thread()
         # First query
-        query1 = "How to create an Azure storage account using az cli?"
+        query1 = "What is the weather in NYC?"
         print(f"User: {query1}")
         result1 = await handle_approvals_with_thread(query1, agent, thread)
         print(f"{agent.name}: {result1}\n")
         print("\n=======================================\n")
         # Second query
-        query2 = "What is Microsoft Agent Framework?"
+        query2 = "Are there any alerts in Seattle region?"
         print(f"User: {query2}")
         result2 = await handle_approvals_with_thread(query2, agent, thread)
         print(f"{agent.name}: {result2}\n")
